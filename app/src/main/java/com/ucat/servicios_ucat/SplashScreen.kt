@@ -1,4 +1,4 @@
- package com.ucat.servicios_ucat
+package com.ucat.servicios_ucat
 
 
 import androidx.compose.foundation.Image
@@ -39,7 +39,7 @@ fun SplashScreen(modifier: Modifier = Modifier) {
             fontWeight = FontWeight.Light,
             color = Color.White,
             modifier = Modifier.constrainAs(versionText) {
-                bottom.linkTo(parent.bottom, margin = 24.dp)
+                bottom.linkTo(parent.bottom, margin = 64.dp)
                 centerHorizontallyTo(parent)
             }
         )
