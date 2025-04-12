@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "56874511379",
+    "project_id": "serviciosucat-67969",
+    "storage_bucket": "serviciosucat-67969.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:56874511379:android:0960f42bc16bd3d15063e6",
+        "android_client_info": {
+          "package_name": "com.ucat.servicios_ucat"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBuH4PvjvsUKzqxd0kw6_MIqU6OOFt6B_s"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
