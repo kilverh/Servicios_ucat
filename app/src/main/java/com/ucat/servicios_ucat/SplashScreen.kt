@@ -22,7 +22,7 @@ fun SplashScreen(modifier: Modifier = Modifier) {
     ) {
         val (logo, versionText) = createRefs()
 
-        // Logo centrado
+
         Image(
             painter = painterResource(id = R.drawable.logo),
             contentDescription = "Logo",
@@ -32,14 +32,13 @@ fun SplashScreen(modifier: Modifier = Modifier) {
 
         )
 
-        // Texto de versión
         Text(
-            text = "VERSIÓN 1.1",
+            text = "VERSIÓN 1.0",
             fontSize = 14.sp,
             fontWeight = FontWeight.Light,
             color = Color.White,
             modifier = Modifier.constrainAs(versionText) {
-                bottom.linkTo(parent.bottom, margin = 64.dp)
+                bottom.linkTo(parent.bottom, margin = 84.dp)
                 centerHorizontallyTo(parent)
             }
         )
