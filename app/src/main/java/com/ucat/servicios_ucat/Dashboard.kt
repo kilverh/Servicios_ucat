@@ -3,6 +3,8 @@ package com.ucat.servicios_ucat
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -16,6 +18,8 @@ import com.ucat.servicios_ucat.ui.theme.*
 fun Dashboard(
     modifier: Modifier = Modifier,
 ) {
+    val mostrarReserva = remember { mutableStateOf(false) }
+
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -30,7 +34,17 @@ fun Dashboard(
             fontWeight = FontWeight.Bold
         )
         Spacer(modifier = Modifier.height(24.dp))
-        MenuButton("RESERVAR") { /* TODO: Navegar a reservar */ }
+        Button(
+            onClick = { mostrarReserva.value = true },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("RESERVAR")
+        }
+        if (mostrarReserva.value) {
+            Booking(onReservaExitosa = {
+                mostrarReserva.value = false //
+            })
+        }
         Spacer(modifier = Modifier.height(24.dp))
         MenuButton("MIS RESERVAS") { /* TODO: Navegar a mis reservas */ }
         Spacer(modifier = Modifier.height(24.dp))

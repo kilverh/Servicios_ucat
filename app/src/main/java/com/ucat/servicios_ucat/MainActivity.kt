@@ -41,6 +41,7 @@ fun AppContent() {
     var mostrarLogin by remember { mutableStateOf(false) }
     var mostrarDashboard by remember { mutableStateOf(false) }
     var mostrarRecuperar by remember { mutableStateOf(false) }
+    var mostrarReserva by remember { mutableStateOf(false) }
 
 
     LaunchedEffect(Unit) {
@@ -57,8 +58,10 @@ fun AppContent() {
             mostrarSplash -> SplashScreen(modifier = Modifier.padding(innerPadding))
             mostrarLogin -> Login(
                 modifier = Modifier.padding(innerPadding),
-                onLoginExitoso = {   mostrarLogin = false
-                    mostrarDashboard = true},
+                onLoginExitoso = {
+                    mostrarLogin = false
+                    mostrarDashboard = true
+                },
                 onIrARegistro = { mostrarLogin = false },
                 onError = {},
                 onRecuperar = {
@@ -66,12 +69,16 @@ fun AppContent() {
                     mostrarRecuperar = true
                 }
             )
+
             mostrarRecuperar -> Recover(
                 onVolverAlLogin = {
                     mostrarRecuperar = false
                     mostrarLogin = true
                 }
             )
+            mostrarReserva -> Booking(
+                modifier = Modifier.padding(innerPadding),
+                onReservaExitosa = { mostrarReserva = false })
             mostrarDashboard -> Dashboard(modifier = Modifier.padding(innerPadding))
             else -> RegistroScreen(
                 modifier = Modifier.padding(innerPadding),
