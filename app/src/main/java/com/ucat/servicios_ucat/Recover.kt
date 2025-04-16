@@ -1,6 +1,8 @@
 package com.ucat.servicios_ucat
 
 import android.widget.Toast
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.material3.Button
@@ -13,6 +15,14 @@ import androidx.compose.ui.unit.dp
 import com.google.firebase.auth.FirebaseAuth
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextField
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
 import com.ucat.servicios_ucat.ui.theme.Servicios_ucatTheme
 
 @Composable
@@ -23,54 +33,68 @@ fun Recover(
     var email by remember { mutableStateOf("") }
     var mensaje by remember { mutableStateOf("") }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(32.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text("Recuperar contraseña")
-        Spacer(modifier = Modifier.height(16.dp))
-
-        OutlinedTextField(
-            value = email,
-            onValueChange = { email = it },
-            label = { Text("Correo institucional") },
-            modifier = Modifier.fillMaxWidth()
+    Box(modifier = Modifier.fillMaxSize()){
+        Image(
+            painter = painterResource(id = R.drawable.logo),
+            contentDescription = null,
+            modifier = Modifier
+                .offset(x = 0.dp, y = -50.dp)
+                .fillMaxSize()
+                .alpha(0.8f),
+            contentScale = ContentScale.FillWidth,
         )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Button(
-            onClick = {
-                if (email.isNotEmpty()) {
-                    FirebaseAuth.getInstance()
-                        .sendPasswordResetEmail(email)
-                        .addOnCompleteListener { task ->
-                            if (task.isSuccessful) {
-                                mensaje = "Correo de recuperación enviado."
-                            } else {
-                                mensaje = "Error: ${task.exception?.message}"
-                            }
-                        }
-                } else {
-                    mensaje = "Por favor ingresa tu correo."
-                }
-            },
-            modifier = Modifier.fillMaxWidth()
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(32.dp),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text("Enviar correo de recuperación")
-        }
+            Text("Recuperar contraseña", fontSize = 30.sp, fontWeight = FontWeight.Bold)
+            Spacer(modifier = Modifier.height(96.dp))
 
-        Spacer(modifier = Modifier.height(8.dp))
+            TextField(
+                value = email,
+                onValueChange = { email = it },
+                label = { Text("Correo institucional") },
+                modifier = Modifier.fillMaxWidth()
+            )
 
-        Text(text = mensaje)
+            Spacer(modifier = Modifier.height(106.dp))
 
-        Spacer(modifier = Modifier.height(16.dp))
+            Button(
+                onClick = {
+                    if (email.isNotEmpty()) {
+                        FirebaseAuth.getInstance()
+                            .sendPasswordResetEmail(email)
+                            .addOnCompleteListener { task ->
+                                if (task.isSuccessful) {
+                                    mensaje = "Correo de recuperación enviado."
+                                } else {
+                                    mensaje = "Error: ${task.exception?.message}"
+                                }
+                            }
+                    } else {
+                        mensaje = "Por favor ingresa tu correo."
+                    }
+                },
+                modifier = Modifier
+                    .width(190.dp)
+                    .height(50.dp),
+                shape = RectangleShape
+            ) {
+                Text("Enviar correo")
+            }
 
-        TextButton(onClick = { onVolverAlLogin() }) {
-            Text("Volver al login")
+            Spacer(modifier = Modifier.height(46.dp))
+
+
+            Text(
+                text = "Inicia sesión",
+                color = Color.White,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.clickable { onVolverAlLogin() }
+            )
         }
     }
 }

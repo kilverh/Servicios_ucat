@@ -13,14 +13,17 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.offset
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.AbsoluteAlignment
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.layout.ContentScale
@@ -52,8 +55,11 @@ fun Login(
         Image(
             painter = painterResource(id = R.drawable.logo),
             contentDescription = null,
-            modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.FillWidth
+            modifier = Modifier
+                .offset(x = 0.dp, y = -65.dp)
+                .fillMaxSize()
+                .alpha(0.8f),
+            contentScale = ContentScale.FillWidth,
         )
         Column(
             modifier = modifier
@@ -63,17 +69,22 @@ fun Login(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text("INICIA SESIÓN", fontSize = 30.sp, fontWeight = FontWeight.Bold)
-            Spacer(modifier = Modifier.height(54.dp))
+            Spacer(modifier = Modifier.height(70.dp))
 
             TextField(
+                modifier = Modifier
+                    .width(380.dp)
+                    .height(60.dp),
                 value = correo,
                 onValueChange = { correo = it },
-                label = { Text("Correo") }
+                label = { Text("Correo Institucional") }
             )
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            TextField(
+            TextField(modifier = Modifier
+                .width(380.dp)
+                .height(60.dp),
                 value = contrasena,
                 onValueChange = { contrasena = it },
                 label = { Text("Contraseña") },
@@ -88,7 +99,7 @@ fun Login(
                 }
             )
 
-            Spacer(modifier = Modifier.height(64.dp))
+            Spacer(modifier = Modifier.height(70.dp))
 
             Button(
                 onClick = {
@@ -102,8 +113,8 @@ fun Login(
                         }
                 },
                 modifier = Modifier
-                    .width(200.dp)
-                    .height(60.dp),
+                    .width(190.dp)
+                    .height(50.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = BlueButton
                 ),

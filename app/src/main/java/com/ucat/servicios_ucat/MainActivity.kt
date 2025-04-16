@@ -66,6 +66,12 @@ fun AppContent() {
                     mostrarRecuperar = true
                 }
             )
+            mostrarRecuperar -> Recover(
+                onVolverAlLogin = {
+                    mostrarRecuperar = false
+                    mostrarLogin = true
+                }
+            )
             mostrarDashboard -> Dashboard(modifier = Modifier.padding(innerPadding))
             else -> RegistroScreen(
                 modifier = Modifier.padding(innerPadding),

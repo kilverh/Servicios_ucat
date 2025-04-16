@@ -12,6 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.AlertDialog
@@ -28,6 +29,7 @@ import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.layout.ContentScale
@@ -66,7 +68,10 @@ fun RegistroScreen(
         Image(
             painter = painterResource(id = R.drawable.logo),
             contentDescription = null,
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .offset(x = 0.dp, y = -65.dp)
+                .fillMaxSize()
+                .alpha(0.8f),
             contentScale = ContentScale.FillWidth
         )
         Column(
@@ -77,14 +82,32 @@ fun RegistroScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text("REGÍSTRATE", fontSize = 30.sp, fontWeight = FontWeight.Bold)
-            Spacer(modifier = Modifier.height(54.dp))
-            TextField(value = nombre, onValueChange = { nombre = it }, label = { Text("Nombre") })
-            Spacer(modifier = Modifier.height(14.dp))
-            TextField(value = apellido, onValueChange = { apellido = it }, label = { Text("Apellido") })
-            Spacer(modifier = Modifier.height(14.dp))
-            TextField(value = correo, onValueChange = { correo = it }, label = { Text("Correo") })
-            Spacer(modifier = Modifier.height(14.dp))
+            Spacer(modifier = Modifier.height(50.dp))
+            TextField(modifier = Modifier
+                .width(380.dp)
+                .height(60.dp),
+                value = nombre,
+                onValueChange = { nombre = it },
+                label = { Text("Nombre") })
+            Spacer(modifier = Modifier.height(30.dp))
+            TextField(modifier = Modifier
+                .width(380.dp)
+                .height(60.dp),
+                value = apellido,
+                onValueChange = { apellido = it },
+                label = { Text("Apellido") })
+            Spacer(modifier = Modifier.height(30.dp))
+            TextField(modifier = Modifier
+                .width(380.dp)
+                .height(60.dp),
+                value = correo,
+                onValueChange = { correo = it },
+                label = { Text("Correo Institucional") })
+            Spacer(modifier = Modifier.height(30.dp))
             TextField(
+                modifier = Modifier
+                    .width(380.dp)
+                    .height(60.dp),
                 value = contrasena,
                 onValueChange = { contrasena = it },
                 label = { Text("Contraseña") },
@@ -93,8 +116,11 @@ fun RegistroScreen(
                     if (lock.value) VisualTransformation.None
                     else PasswordVisualTransformation()
             )
-            Spacer(modifier = Modifier.height(14.dp))
+            Spacer(modifier = Modifier.height(30.dp))
             TextField(
+                modifier = Modifier
+                    .width(380.dp)
+                    .height(60.dp),
                 value = repContrasena,
                 onValueChange = { repContrasena = it },
                 trailingIcon = { Image(painterResource(if (lock.value)R.drawable.eye_show else R.drawable.hidden_eye), contentDescription="REGISTRATE", modifier= Modifier.clickable{lock.value=!lock.value})},
@@ -103,7 +129,7 @@ fun RegistroScreen(
                     if (lock.value) VisualTransformation.None
                     else PasswordVisualTransformation()
             )
-            Spacer(modifier = Modifier.height(14.dp))
+            Spacer(modifier = Modifier.height(30.dp))
 
             if (!contrasenasCoinciden && repContrasena.isNotBlank()) {
                 Text(
@@ -112,7 +138,6 @@ fun RegistroScreen(
                     modifier = Modifier.padding(top = 4.dp)
                 )
             }
-            Spacer(modifier = Modifier.height(14.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Checkbox(
                     checked = aceptaTerminos,
@@ -120,7 +145,7 @@ fun RegistroScreen(
                 )
                 Text("Acepto los términos y condiciones", color = Color.White)
             }
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(10.dp))
             Button(onClick = {
                 RegistrarUsuario(
                     nombre = nombre,
@@ -142,8 +167,8 @@ fun RegistroScreen(
                 )
             },
                 modifier = Modifier
-                .width(250.dp)
-                .height(60.dp),
+                .width(190.dp)
+                .height(50.dp),
             colors = ButtonColors(
                 containerColor = BlueButton,
                 contentColor = BlueButton,
@@ -155,13 +180,13 @@ fun RegistroScreen(
 
             ) {
                 Text(
-                    text = "Registrar",
+                    text = "REGISTRARSE",
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color.White
                 )
             }
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(10.dp))
             Text(
                 text = "¿Ya tienes una cuenta? Inicia sesión",
                 color = Color.White,
@@ -189,7 +214,7 @@ fun RegistroScreen(
             )
         }
         if (errorMessage != null) {
-            androidx.compose.material3.AlertDialog(
+            AlertDialog(
                 onDismissRequest = { errorMessage = null },
                 confirmButton = {
                     Button(onClick = { errorMessage = null }) {
