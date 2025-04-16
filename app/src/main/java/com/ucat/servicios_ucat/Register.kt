@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AlertDialogDefaults.containerColor
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -47,7 +48,7 @@ import kotlinx.coroutines.NonDisposableHandle.parent
 @Composable
 fun RegistroScreen(
     modifier: Modifier = Modifier,
-    onRegistroExitoso: () -> Unit,
+    onIrALogin: ()-> Unit,
     onError: (String) -> Unit
 ) {
     var nombre by remember { mutableStateOf("") }
@@ -58,6 +59,8 @@ fun RegistroScreen(
     val lock = remember{mutableStateOf(false)}
     var aceptaTerminos by remember { mutableStateOf(false) }
     val contrasenasCoinciden = contrasena == repContrasena && contrasena.isNotBlank()
+    var showSuccessDialog by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
 
     Box (modifier = Modifier.fillMaxSize()){
         Image(
@@ -124,8 +127,18 @@ fun RegistroScreen(
                     apellido = apellido,
                     correo = correo,
                     contrasena = contrasena,
-                    onSuccess = onRegistroExitoso,
-                    onError = onError
+                    onSuccess = {
+                        showSuccessDialog = true
+                        nombre = ""
+                        apellido = ""
+                        correo = ""
+                        contrasena = ""
+                        repContrasena = ""
+                        aceptaTerminos = false
+                    },
+                    onError = { error ->
+                        errorMessage = error
+                    }
                 )
             },
                 modifier = Modifier
@@ -149,8 +162,43 @@ fun RegistroScreen(
                 )
             }
             Spacer(modifier = Modifier.height(24.dp))
-            Text(text = "Ya tienes una cuenta?", color = Color.White)
-            Text(text = "Inicia sesión", color = BlueButton)
+            Text(
+                text = "¿Ya tienes una cuenta? Inicia sesión",
+                color = Color.White,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.clickable { onIrALogin() }
+            )
+
+        }
+        if (showSuccessDialog) {
+            AlertDialog(
+                onDismissRequest = {
+                    showSuccessDialog = false
+
+                },
+                confirmButton = {
+                    Button(onClick = {
+                        showSuccessDialog = false
+
+                    }) {
+                        Text("OK")
+                    }
+                },
+                title = { Text("Registro exitoso") },
+                text = { Text("Tu cuenta ha sido creada correctamente.") }
+            )
+        }
+        if (errorMessage != null) {
+            androidx.compose.material3.AlertDialog(
+                onDismissRequest = { errorMessage = null },
+                confirmButton = {
+                    Button(onClick = { errorMessage = null }) {
+                        Text("Cerrar")
+                    }
+                },
+                title = { Text("Error") },
+                text = { Text(errorMessage ?: "") }
+            )
         }
     }
 }

@@ -19,6 +19,7 @@ import androidx.compose.ui.platform.LocalContext
 import com.google.firebase.FirebaseApp
 import com.ucat.servicios_ucat.ui.theme.BlueInstitutional
 import com.ucat.servicios_ucat.ui.theme.Servicios_ucatTheme
+import java.nio.file.WatchEvent
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -37,28 +38,39 @@ class MainActivity : ComponentActivity() {
 fun AppContent() {
     val context = LocalContext.current
     var mostrarSplash by remember { mutableStateOf(true) }
+    var mostrarLogin by remember { mutableStateOf(false) }
+    var mostrarDashboard by remember { mutableStateOf(false) }
+    var mostrarRecuperar by remember { mutableStateOf(false) }
 
-    // Temporizador de 3 segundos (puedes cambiarlo)
+
     LaunchedEffect(Unit) {
         kotlinx.coroutines.delay(3000)
         mostrarSplash = false
+        mostrarLogin = true
     }
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         containerColor = BlueInstitutional
     ) { innerPadding ->
-        if (mostrarSplash) {
-            SplashScreen(modifier = Modifier.padding(innerPadding))
-        } else {
-            RegistroScreen(
+        when {
+            mostrarSplash -> SplashScreen(modifier = Modifier.padding(innerPadding))
+            mostrarLogin -> Login(
                 modifier = Modifier.padding(innerPadding),
-                onRegistroExitoso = {
-                    Toast.makeText(context, "Registro exitoso", Toast.LENGTH_SHORT).show()
-                },
-                onError = { error ->
-                    Toast.makeText(context, error, Toast.LENGTH_LONG).show()
+                onLoginExitoso = {   mostrarLogin = false
+                    mostrarDashboard = true},
+                onIrARegistro = { mostrarLogin = false },
+                onError = {},
+                onRecuperar = {
+                    mostrarLogin = false
+                    mostrarRecuperar = true
                 }
+            )
+            mostrarDashboard -> Dashboard(modifier = Modifier.padding(innerPadding))
+            else -> RegistroScreen(
+                modifier = Modifier.padding(innerPadding),
+                onIrALogin = { mostrarLogin = true },
+                onError = {}
             )
         }
     }
