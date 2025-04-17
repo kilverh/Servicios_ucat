@@ -101,6 +101,10 @@ fun AppContent() {
                 onIrAGestionarReservas = {
                     mostrarDashboard = false
                     mostrarGestionReservas = true
+                },
+                onIrACerrar = {
+                    mostrarDashboard = false
+                    mostrarLogin = true
                 }
             )
 

@@ -1,6 +1,7 @@
 package com.ucat.servicios_ucat
 
 import android.widget.Toast
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -9,8 +10,13 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -54,12 +60,21 @@ fun ManageBookings(onVolverAlMenu: () -> Unit) {
     }
 
     Box(modifier = Modifier.fillMaxSize()){
-        Column(
+        Image(
+            painter = painterResource(id = R.drawable.logo),
+            contentDescription = null,
             modifier = Modifier
-                .padding(16.dp)
                 .fillMaxSize()
+                .alpha(0.8f),
+            contentScale = ContentScale.FillWidth
+        )
+        Column(modifier = Modifier
+            .padding(36.dp)
+            .fillMaxSize(),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text("Tus reservas", style = MaterialTheme.typography.headlineSmall)
+            Text("TUS RESERVAS", style = MaterialTheme.typography.headlineSmall)
             Spacer(modifier = Modifier.height(16.dp))
 
             LazyColumn {
@@ -112,19 +127,19 @@ fun ManageBookings(onVolverAlMenu: () -> Unit) {
                 Text("Editar reserva", style = MaterialTheme.typography.titleMedium)
                 Spacer(modifier = Modifier.height(8.dp))
 
-                OutlinedTextField(
+                TextField(
                     value = nuevoTipo,
                     onValueChange = { nuevoTipo = it },
                     label = { Text("Tipo") },
                     modifier = Modifier.fillMaxWidth()
                 )
-                OutlinedTextField(
+                TextField(
                     value = nuevaFecha,
                     onValueChange = { nuevaFecha = it },
                     label = { Text("Fecha") },
                     modifier = Modifier.fillMaxWidth()
                 )
-                OutlinedTextField(
+                TextField(
                     value = nuevaHora,
                     onValueChange = { nuevaHora = it },
                     label = { Text("Hora") },
@@ -155,7 +170,11 @@ fun ManageBookings(onVolverAlMenu: () -> Unit) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            Button(onClick = onVolverAlMenu) {
+            Button(onClick = onVolverAlMenu,
+                modifier = Modifier
+                    .width(190.dp)
+                    .height(50.dp),
+                shape = RectangleShape){
                 Text("Volver al menú")
             }
         }

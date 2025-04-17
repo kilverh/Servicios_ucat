@@ -1,12 +1,16 @@
 package com.ucat.servicios_ucat
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -16,10 +20,19 @@ import com.ucat.servicios_ucat.ui.theme.*
 fun Dashboard(
     modifier: Modifier = Modifier,
     onIrAReservar: () -> Unit,
-    onIrAGestionarReservas: () -> Unit
+    onIrAGestionarReservas: () -> Unit,
+    onIrACerrar: () ->Unit
 ) {
     Box(modifier = Modifier.fillMaxSize()){
-
+        Image(
+            painter = painterResource(id = R.drawable.logo),
+            contentDescription = null,
+            modifier = Modifier
+                .offset(y = (-65).dp)
+                .fillMaxSize()
+                .alpha(0.8f),
+            contentScale = ContentScale.FillWidth
+        )
         Column(
             modifier = modifier
                 .fillMaxSize()
@@ -61,7 +74,15 @@ fun Dashboard(
             Spacer(modifier = Modifier.height(24.dp))
             MenuButton("AYUDA") { /* TODO: Navegar a ayuda */ }
             Spacer(modifier = Modifier.height(24.dp))
-            MenuButton("AJUSTES") { /* TODO: Navegar a ajustes */ }
+            Button(
+                onClick = onIrACerrar,
+                modifier = Modifier
+                    .width(380.dp)
+                    .height(60.dp),
+                shape = RectangleShape
+            ) {
+                Text("CERRAR SESIÓN")
+            }
         }
     }
 }
