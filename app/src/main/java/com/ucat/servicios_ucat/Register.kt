@@ -1,6 +1,5 @@
 package com.ucat.servicios_ucat
 
-import android.R.attr.enabled
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -16,7 +15,6 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.AlertDialogDefaults.containerColor
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
@@ -26,7 +24,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonColors
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.alpha
@@ -34,18 +31,15 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.sp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.ucat.servicios_ucat.ui.theme.BlueButton
-import com.ucat.servicios_ucat.ui.theme.BlueInstitutional
 import com.ucat.servicios_ucat.ui.theme.DarkGrey
-import kotlinx.coroutines.NonDisposableHandle.parent
+
 
 @Composable
 fun RegistroScreen(
@@ -166,9 +160,9 @@ fun RegistroScreen(
                     }
                 )
             },
-                modifier = Modifier
-                .width(190.dp)
-                .height(50.dp),
+                    modifier = Modifier
+                    .width(190.dp)
+                    .height(50.dp),
             colors = ButtonColors(
                 containerColor = BlueButton,
                 contentColor = BlueButton,

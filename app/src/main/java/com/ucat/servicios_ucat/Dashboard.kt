@@ -3,8 +3,6 @@ package com.ucat.servicios_ucat
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -17,44 +15,58 @@ import com.ucat.servicios_ucat.ui.theme.*
 @Composable
 fun Dashboard(
     modifier: Modifier = Modifier,
+    onIrAReservar: () -> Unit,
+    onIrAGestionarReservas: () -> Unit
 ) {
-    val mostrarReserva = remember { mutableStateOf(false) }
+    Box(modifier = Modifier.fillMaxSize()){
 
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(24.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(
-            text = "SERVICIOS UCAT",
-            fontSize = 24.sp,
-            modifier = Modifier.padding(bottom = 24.dp),
-            fontWeight = FontWeight.Bold
-        )
-        Spacer(modifier = Modifier.height(24.dp))
-        Button(
-            onClick = { mostrarReserva.value = true },
-            modifier = Modifier.fillMaxWidth()
+        Column(
+            modifier = modifier
+                .fillMaxSize()
+                .padding(24.dp),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text("RESERVAR")
+            Text(
+                text = "SERVICIOS UCAT",
+                fontSize = 24.sp,
+                modifier = Modifier.padding(bottom = 24.dp),
+                fontWeight = FontWeight.Bold
+            )
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Button(
+                onClick = onIrAReservar,
+                modifier = Modifier
+                    .width(380.dp)
+                    .height(60.dp),
+                shape = RectangleShape
+            ) {
+                Text("RESERVAR")
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+            Button(
+                onClick = onIrAGestionarReservas,
+                modifier = Modifier
+                    .width(380.dp)
+                    .height(60.dp),
+                shape = RectangleShape
+            ) {
+                Text("MIS RESERVAS")
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+            MenuButton("HORARIOS") { /* TODO: Navegar a horarios */ }
+            Spacer(modifier = Modifier.height(24.dp))
+            MenuButton("AYUDA") { /* TODO: Navegar a ayuda */ }
+            Spacer(modifier = Modifier.height(24.dp))
+            MenuButton("AJUSTES") { /* TODO: Navegar a ajustes */ }
         }
-        if (mostrarReserva.value) {
-            Booking(onReservaExitosa = {
-                mostrarReserva.value = false //
-            })
-        }
-        Spacer(modifier = Modifier.height(24.dp))
-        MenuButton("MIS RESERVAS") { /* TODO: Navegar a mis reservas */ }
-        Spacer(modifier = Modifier.height(24.dp))
-        MenuButton("HORARIOS") { /* TODO: Navegar a horarios */ }
-        Spacer(modifier = Modifier.height(24.dp))
-        MenuButton("AYUDA") { /* TODO: Navegar a ayuda */ }
-        Spacer(modifier = Modifier.height(24.dp))
-        MenuButton("AJUSTES") { /* TODO: Navegar a ajustes */ }
     }
 }
+
+
 
 @Composable
 fun MenuButton(text: String, onClick: () -> Unit) {
