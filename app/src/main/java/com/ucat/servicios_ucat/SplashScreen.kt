@@ -1,4 +1,4 @@
- package com.ucat.servicios_ucat
+package com.ucat.servicios_ucat
 
 
 import androidx.compose.foundation.Image
@@ -10,9 +10,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.sp
 import androidx.compose.material3.Text
 import androidx.compose.ui.graphics.Color
-import com.ucat.servicios_ucat.ui.theme.BlueInstitutional
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 
 @Composable
@@ -22,7 +20,7 @@ fun SplashScreen(modifier: Modifier = Modifier) {
     ) {
         val (logo, versionText) = createRefs()
 
-        // Logo centrado
+
         Image(
             painter = painterResource(id = R.drawable.logo),
             contentDescription = "Logo",
@@ -32,31 +30,15 @@ fun SplashScreen(modifier: Modifier = Modifier) {
 
         )
 
-        // Texto de versión
         Text(
-            text = "VERSIÓN 1.1",
+            text = "VERSIÓN 1.0",
             fontSize = 14.sp,
             fontWeight = FontWeight.Light,
             color = Color.White,
             modifier = Modifier.constrainAs(versionText) {
-                bottom.linkTo(parent.bottom, margin = 24.dp)
+                bottom.linkTo(parent.bottom, margin = 84.dp)
                 centerHorizontallyTo(parent)
             }
         )
-    }
-}
-
-@Preview(
-    showSystemUi = true,
-    heightDp = 800,
-    widthDp = 400,
-)
-@Composable
-private fun Prev()  {
-    androidx.compose.material3.Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = BlueInstitutional
-    ) {
-        SplashScreen()
     }
 }
