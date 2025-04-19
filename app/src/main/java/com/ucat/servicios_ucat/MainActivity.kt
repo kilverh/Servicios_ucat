@@ -37,6 +37,8 @@ fun AppContent() {
     var mostrarRecuperar by remember { mutableStateOf(false) }
     var mostrarReserva by remember { mutableStateOf(false) }
     var mostrarGestionReservas by remember { mutableStateOf(false) }
+    var mostrarAyuda by remember { mutableStateOf(false) }
+
 
     LaunchedEffect(Unit) {
         delay(3000)
@@ -79,7 +81,11 @@ fun AppContent() {
                         mostrarGestionReservas = true
                     },
                     onHorarios = {},
-                    onAyuda = {},
+                    onAyuda = {
+                        mostrarReserva = false
+                        mostrarGestionReservas = false
+                        mostrarDashboard = false
+                        mostrarAyuda = true},
                     onCerrarSesion = {
                         mostrarReserva = false
                         mostrarLogin = true
@@ -109,7 +115,11 @@ fun AppContent() {
                     },
                     onMisReservas = {},
                     onHorarios = {},
-                    onAyuda = {},
+                    onAyuda = {
+                        mostrarReserva = false
+                        mostrarGestionReservas = false
+                        mostrarDashboard = false
+                        mostrarAyuda = true},
                     onCerrarSesion = {
                         mostrarGestionReservas = false
                         mostrarLogin = true
@@ -125,7 +135,39 @@ fun AppContent() {
                 )
             }
         )
-
+        mostrarAyuda -> PantallaConDrawer(
+            drawerContent = {
+                DrawerContent(
+                    onReservar = {
+                        mostrarAyuda = false
+                        mostrarReserva = true
+                    },
+                    onMisReservas = {
+                        mostrarAyuda = false
+                        mostrarGestionReservas = true
+                    },
+                    onHorarios = {},
+                    onAyuda = {
+                        mostrarReserva = false
+                        mostrarGestionReservas = false
+                        mostrarDashboard = false
+                        mostrarAyuda = true
+                              },
+                    onCerrarSesion = {
+                        mostrarAyuda = false
+                        mostrarLogin = true
+                    }
+                )
+            },
+            contenidoPrincipal = {
+                Help(
+                    onReservaExitosa = {
+                        mostrarAyuda = false
+                        mostrarDashboard = true
+                    }
+                )
+            }
+        )
         mostrarDashboard -> PantallaConDrawer(
             drawerContent = {
                 DrawerContent(
@@ -141,7 +183,10 @@ fun AppContent() {
                         // Aquí puedes navegar a una pantalla de horarios si la implementas
                     },
                     onAyuda = {
-                        // Aquí puedes navegar a una pantalla de ayuda si la implementas
+                        mostrarReserva = false
+                        mostrarGestionReservas = false
+                        mostrarDashboard = false
+                        mostrarAyuda = true
                     },
                     onCerrarSesion = {
                         mostrarDashboard = false
@@ -163,7 +208,10 @@ fun AppContent() {
                         // Pendiente: implementar pantalla de horarios
                     },
                     onIrAAyuda = {
-                        // Pendiente: implementar pantalla de ayuda
+                        mostrarReserva = false
+                        mostrarGestionReservas = false
+                        mostrarDashboard = false
+                        mostrarAyuda = true
                     },
                     onIrACerrar = {
                         mostrarDashboard = false

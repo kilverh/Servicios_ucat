@@ -63,11 +63,18 @@ fun DashboardContent(
             ) {
                 Text("MIS RESERVAS")
             }
-
             Spacer(modifier = Modifier.height(24.dp))
             MenuButton("HORARIOS") { /* TODO: Navegar a horarios */ }
             Spacer(modifier = Modifier.height(24.dp))
-            MenuButton("AYUDA") { /* TODO: Navegar a ayuda */ }
+            Button(
+                onClick = onIrAAyuda,
+                modifier = Modifier
+                    .width(380.dp)
+                    .height(60.dp),
+                shape = RectangleShape
+            ) {
+                Text("AYUDA")
+            }
             Spacer(modifier = Modifier.height(24.dp))
             Button(
                 onClick = onIrACerrar,

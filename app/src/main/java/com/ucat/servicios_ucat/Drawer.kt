@@ -61,7 +61,7 @@ fun PantallaConDrawer(
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = Color(0xFF2C80C1),
+                        containerColor = BlueInstitutional,
                         titleContentColor = BlueButton
                     )
                 )
@@ -97,6 +97,6 @@ fun DrawerContent(
 @Composable
 fun DrawerItem(text: String, onClick: () -> Unit) {
     TextButton(onClick = onClick) {
-        Text(text, fontSize = 18.sp)
+        Text(text, fontSize = 18.sp, color = BlueButton)
     }
 }
