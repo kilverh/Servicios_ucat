@@ -1,6 +1,7 @@
 package com.ucat.servicios_ucat
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -17,18 +18,19 @@ import androidx.compose.ui.unit.sp
 import com.ucat.servicios_ucat.ui.theme.*
 
 @Composable
-fun Dashboard(
+fun DashboardContent(
     modifier: Modifier = Modifier,
     onIrAReservar: () -> Unit,
     onIrAGestionarReservas: () -> Unit,
-    onIrACerrar: () ->Unit
+    onIrAHorarios: () -> Unit,
+    onIrAAyuda: () -> Unit,
+    onIrACerrar: () -> Unit
 ) {
-    Box(modifier = Modifier.fillMaxSize()){
+    Box(modifier = Modifier.fillMaxSize().background(BlueInstitutional)){
         Image(
             painter = painterResource(id = R.drawable.logo),
             contentDescription = null,
             modifier = Modifier
-                .offset(y = (-65).dp)
                 .fillMaxSize()
                 .alpha(0.8f),
             contentScale = ContentScale.FillWidth
@@ -39,15 +41,8 @@ fun Dashboard(
                 .padding(24.dp),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(
-                text = "SERVICIOS UCAT",
-                fontSize = 24.sp,
-                modifier = Modifier.padding(bottom = 24.dp),
-                fontWeight = FontWeight.Bold
-            )
-            Spacer(modifier = Modifier.height(24.dp))
 
+        ) {
             Button(
                 onClick = onIrAReservar,
                 modifier = Modifier

@@ -6,18 +6,14 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import com.google.firebase.FirebaseApp
 import com.ucat.servicios_ucat.ui.theme.BlueInstitutional
 import com.ucat.servicios_ucat.ui.theme.Servicios_ucatTheme
+import kotlinx.coroutines.delay
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -42,78 +38,146 @@ fun AppContent() {
     var mostrarReserva by remember { mutableStateOf(false) }
     var mostrarGestionReservas by remember { mutableStateOf(false) }
 
-
     LaunchedEffect(Unit) {
-        kotlinx.coroutines.delay(3000)
+        delay(3000)
         mostrarSplash = false
         mostrarLogin = true
     }
-
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         containerColor = BlueInstitutional
     ) { innerPadding ->
-        when {
-            mostrarSplash -> SplashScreen(modifier = Modifier.padding(innerPadding))
-            mostrarLogin -> Login(
-                modifier = Modifier.padding(innerPadding),
-                onLoginExitoso = {
-                    mostrarLogin = false
-                    mostrarDashboard = true
-                },
-                onIrARegistro = { mostrarLogin = false },
-                onError = {},
-                onRecuperar = {
-                    mostrarLogin = false
-                    mostrarRecuperar = true
-                }
-            )
+    when {
+        mostrarSplash -> SplashScreen()
 
-            mostrarRecuperar -> Recover(
-                onVolverAlLogin = {
-                    mostrarRecuperar = false
-                    mostrarLogin = true
-                }
-            )
-            mostrarReserva -> Booking(
-                modifier = Modifier.padding(innerPadding),
-                onReservaExitosa = {
-                    mostrarReserva = false
-                    mostrarDashboard = true
-                },
-                onVolverAlMenu = {
-                    mostrarReserva = false
-                    mostrarDashboard = true
-                }
-            )
-            mostrarGestionReservas -> ManageBookings(
-                onVolverAlMenu = {
-                    mostrarGestionReservas = false
-                    mostrarDashboard = true
-                }
-            )
-            mostrarDashboard -> Dashboard(
-                modifier = Modifier.padding(innerPadding),
-                onIrAReservar = {
-                    mostrarDashboard = false
-                    mostrarReserva = true
-                },
-                onIrAGestionarReservas = {
-                    mostrarDashboard = false
-                    mostrarGestionReservas = true
-                },
-                onIrACerrar = {
-                    mostrarDashboard = false
-                    mostrarLogin = true
-                }
-            )
+        mostrarLogin -> Login(
+            onLoginExitoso = {
+                mostrarLogin = false
+                mostrarDashboard = true
+            },
+            onIrARegistro = { mostrarLogin = false },
+            onError = {},
+            onRecuperar = {
+                mostrarLogin = false
+                mostrarRecuperar = true
+            }
+        )
 
-            else -> RegistroScreen(
-                modifier = Modifier.padding(innerPadding),
-                onIrALogin = { mostrarLogin = true },
-                onError = {}
-            )
-        }
+        mostrarRecuperar -> Recover(
+            onVolverAlLogin = {
+                mostrarRecuperar = false
+                mostrarLogin = true
+            }
+        )
+
+        mostrarReserva -> PantallaConDrawer(
+            drawerContent = {
+                DrawerContent(
+                    onReservar = {},
+                    onMisReservas = {
+                        mostrarReserva = false
+                        mostrarGestionReservas = true
+                    },
+                    onHorarios = {},
+                    onAyuda = {},
+                    onCerrarSesion = {
+                        mostrarReserva = false
+                        mostrarLogin = true
+                    }
+                )
+            },
+            contenidoPrincipal = {
+                Booking(
+                    onReservaExitosa = {
+                        mostrarReserva = false
+                        mostrarDashboard = true
+                    },
+                    onVolverAlMenu = {
+                        mostrarReserva = false
+                        mostrarDashboard = true
+                    }
+                )
+            }
+        )
+
+        mostrarGestionReservas -> PantallaConDrawer(
+            drawerContent = {
+                DrawerContent(
+                    onReservar = {
+                        mostrarGestionReservas = false
+                        mostrarReserva = true
+                    },
+                    onMisReservas = {},
+                    onHorarios = {},
+                    onAyuda = {},
+                    onCerrarSesion = {
+                        mostrarGestionReservas = false
+                        mostrarLogin = true
+                    }
+                )
+            },
+            contenidoPrincipal = {
+                ManageBookings(
+                    onVolverAlMenu = {
+                        mostrarGestionReservas = false
+                        mostrarDashboard = true
+                    }
+                )
+            }
+        )
+
+        mostrarDashboard -> PantallaConDrawer(
+            drawerContent = {
+                DrawerContent(
+                    onReservar = {
+                        mostrarDashboard = false
+                        mostrarReserva = true
+                    },
+                    onMisReservas = {
+                        mostrarDashboard = false
+                        mostrarGestionReservas = true
+                    },
+                    onHorarios = {
+                        // Aquí puedes navegar a una pantalla de horarios si la implementas
+                    },
+                    onAyuda = {
+                        // Aquí puedes navegar a una pantalla de ayuda si la implementas
+                    },
+                    onCerrarSesion = {
+                        mostrarDashboard = false
+                        mostrarLogin = true
+                    }
+                )
+            },
+            contenidoPrincipal = {
+                DashboardContent(
+                    onIrAReservar = {
+                        mostrarDashboard = false
+                        mostrarReserva = true
+                    },
+                    onIrAGestionarReservas = {
+                        mostrarDashboard = false
+                        mostrarGestionReservas = true
+                    },
+                    onIrAHorarios = {
+                        // Pendiente: implementar pantalla de horarios
+                    },
+                    onIrAAyuda = {
+                        // Pendiente: implementar pantalla de ayuda
+                    },
+                    onIrACerrar = {
+                        mostrarDashboard = false
+                        mostrarLogin = true
+                    }
+                )
+            }
+        )
+
+        else -> RegistroScreen(
+            modifier = Modifier.padding(innerPadding),
+            onIrALogin = { mostrarLogin = true },
+            onError = {}
+        )
+    }
     }
 }
-

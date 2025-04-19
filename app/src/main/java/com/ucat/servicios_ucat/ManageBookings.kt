@@ -1,5 +1,6 @@
 package com.ucat.servicios_ucat
 
+import android.R.attr.shape
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
@@ -163,7 +164,8 @@ fun ManageBookings(onVolverAlMenu: () -> Unit) {
                                 if (it.id == id) it.copy(tipo = nuevoTipo, fecha = nuevaFecha, hora = nuevaHora) else it
                             }
                         }
-                }) {
+                },  shape = RectangleShape
+                ) {
                     Text("Guardar cambios")
                 }
             }
