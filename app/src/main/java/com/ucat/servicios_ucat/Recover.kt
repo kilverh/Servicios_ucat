@@ -19,6 +19,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
+import com.ucat.servicios_ucat.ui.theme.BlueButton
 
 @Composable
 fun Recover(
@@ -28,7 +29,7 @@ fun Recover(
     var email by remember { mutableStateOf("") }
     var mensaje by remember { mutableStateOf("") }
 
-    Box(modifier = Modifier.fillMaxSize()){
+    Box(modifier = Modifier.fillMaxSize()) {
         Image(
             painter = painterResource(id = R.drawable.logo),
             contentDescription = null,
@@ -46,7 +47,7 @@ fun Recover(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text("Recuperar contraseña", fontSize = 30.sp, fontWeight = FontWeight.Bold)
-            Spacer(modifier = Modifier.height(96.dp))
+            Spacer(modifier = Modifier.height(76.dp))
 
             TextField(
                 value = email,
@@ -55,7 +56,17 @@ fun Recover(
                 modifier = Modifier.fillMaxWidth()
             )
 
-            Spacer(modifier = Modifier.height(106.dp))
+            Spacer(modifier = Modifier.height(76.dp))
+
+
+            if (mensaje.isNotEmpty()) {
+                Text(
+                    text = mensaje,
+                    color = if (mensaje.startsWith("Error")) BlueButton else BlueButton,
+                    fontWeight = FontWeight.Bold
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+            }
 
             Button(
                 onClick = {
@@ -83,9 +94,8 @@ fun Recover(
 
             Spacer(modifier = Modifier.height(46.dp))
 
-
             Text(
-                text = "Inicia sesión",
+                text = "¿Ya tienes una cuenta? Inicia sesión",
                 color = Color.White,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.clickable { onVolverAlLogin() }
