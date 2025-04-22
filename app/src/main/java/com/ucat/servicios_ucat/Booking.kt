@@ -4,6 +4,7 @@ import android.app.DatePickerDialog
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
@@ -180,7 +181,10 @@ fun FechaPickerField(fecha: String, onFechaSeleccionada: (String) -> Unit) {
         readOnly = true,
         trailingIcon = {
             IconButton(onClick = { datePickerDialog.show() }) {
-                Icon(Icons.Default.ArrowDropDown, contentDescription = null)
+                    Image(
+                        painter = painterResource( R.drawable.calendar),
+                        contentDescription = null
+                    )
             }
         },
         modifier = Modifier.width(380.dp).height(60.dp)
