@@ -21,6 +21,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.google.firebase.Timestamp
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.ucat.servicios_ucat.ui.theme.BlueButton
 import com.ucat.servicios_ucat.ui.theme.BlueInstitutional
@@ -193,6 +194,7 @@ fun reservarCancha(db: FirebaseFirestore, context: android.content.Context, fech
         .whereEqualTo("hora", hora)
         .whereEqualTo("cancha", cancha)
 
+    val firebaseAuth = FirebaseAuth.getInstance()
     docRef.get().addOnSuccessListener { result ->
         if (result.isEmpty) {
             val reserva = hashMapOf(
@@ -201,7 +203,8 @@ fun reservarCancha(db: FirebaseFirestore, context: android.content.Context, fech
                 "hora" to hora,
                 "deporte" to deporte,
                 "cancha" to cancha,
-                "timestamp" to Timestamp.now()
+                "timestamp" to Timestamp.now(),
+                "uid" to firebaseAuth.currentUser?.uid
             )
 
             db.collection("reservas")
@@ -222,6 +225,7 @@ fun reservarCancha(db: FirebaseFirestore, context: android.content.Context, fech
 
 fun validarYReservarObjeto(db: FirebaseFirestore, context: android.content.Context, fecha: String, hora: String, nombre: String, tipo: String) {
     val inventarioRef = db.collection("inventario").document(nombre)
+    val firebaseAuth = FirebaseAuth.getInstance()
 
     inventarioRef.get().addOnSuccessListener { document ->
         val cantidadDisponible = document.getLong("cantidadDisponible") ?: 0L
@@ -231,6 +235,7 @@ fun validarYReservarObjeto(db: FirebaseFirestore, context: android.content.Conte
                 "tipo" to tipo,
                 "fecha" to fecha,
                 "hora" to hora,
+                "uid" to firebaseAuth.currentUser?.uid,
                 (if (tipo == "Instrumento") "instrumento" else if (tipo == "Balón") "balon" else "juego") to nombre,
                 "timestamp" to Timestamp.now()
             )
