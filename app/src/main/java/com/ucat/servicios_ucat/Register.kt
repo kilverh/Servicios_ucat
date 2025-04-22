@@ -35,7 +35,7 @@ fun RegistroScreen(
     val context = LocalContext.current
 
     var nombre by remember { mutableStateOf("") }
-    var apellido by remember { mutableStateOf("") }
+    var codigo by remember { mutableStateOf("") }
     var correo by remember { mutableStateOf("") }
     var contrasena by remember { mutableStateOf("") }
     var repContrasena by remember { mutableStateOf("") }
@@ -45,7 +45,7 @@ fun RegistroScreen(
     var isLoading by remember { mutableStateOf(false) }
 
     val contrasenasCoinciden = contrasena == repContrasena && contrasena.isNotBlank()
-    val camposLlenos = nombre.isNotBlank() && apellido.isNotBlank() && correo.isNotBlank() &&
+    val camposLlenos = nombre.isNotBlank() && codigo.isNotBlank() && correo.isNotBlank() &&
             contrasena.isNotBlank() && repContrasena.isNotBlank()
 
     fun esContrasenaValida(contrasena: String): Boolean {
@@ -54,10 +54,12 @@ fun RegistroScreen(
     }
 
     fun esCorreoValido(correo: String): Boolean {
-        val emailRegex = "^[A-Za-z](.*)([@]{1})(.{1,})(\\.)(.{1,})"
-        return correo.matches(emailRegex.toRegex())
-    }
 
+        val emailRegex = "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.(com|co)$"
+
+
+        return correo.matches(emailRegex.toRegex()) && correo.endsWith("@ucatolica.edu.co")
+    }
     Box(modifier = Modifier.fillMaxSize()) {
         Image(
             painter = painterResource(id = R.drawable.logo),
@@ -76,6 +78,7 @@ fun RegistroScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Spacer(modifier = Modifier.height(50.dp))
+
             Text("REGÍSTRATE", fontSize = 30.sp, fontWeight = FontWeight.Bold)
 
             Spacer(modifier = Modifier.height(30.dp))
@@ -91,9 +94,9 @@ fun RegistroScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             TextField(
-                value = apellido,
-                onValueChange = { apellido = it },
-                label = { Text("Apellido") },
+                value = codigo,
+                onValueChange = { codigo = it },
+                label = { Text("Codigó estudiantil") },
                 modifier = Modifier
                     .width(380.dp)
                     .height(60.dp),
@@ -110,7 +113,7 @@ fun RegistroScreen(
             )
             if (correo.isNotBlank() && !esCorreoValido(correo)) {
                 Text(
-                    text = "El correo no es válido",
+                    text = "El correo institucional debe terminar en @ucatolica.edu.co",
                     color = BlueButton,
                     fontSize = 12.sp
                 )
@@ -182,13 +185,13 @@ fun RegistroScreen(
                     isLoading = true
                     RegistrarUsuario(
                         nombre = nombre,
-                        apellido = apellido,
+                        codigo = codigo,
                         correo = correo,
                         contrasena = contrasena,
                         onSuccess = {
                             Toast.makeText(context, "Cuenta creada exitosamente", Toast.LENGTH_LONG).show()
                             nombre = ""
-                            apellido = ""
+                            codigo = ""
                             correo = ""
                             contrasena = ""
                             repContrasena = ""
@@ -249,7 +252,7 @@ fun RegistroScreen(
 fun RegistrarUsuario(
         modifier: Modifier = Modifier,
         nombre: String,
-        apellido: String,
+        codigo: String,
         correo: String,
         contrasena: String,
         onSuccess: () -> Unit,
@@ -264,7 +267,7 @@ fun RegistrarUsuario(
                     val uid = auth.currentUser?.uid ?: return@addOnCompleteListener
                     val user = hashMapOf(
                         "nombre" to nombre,
-                        "apellido" to apellido,
+                        "codigo" to codigo,
                         "correo" to correo
                     )
                     db.collection("usuarios").document(uid).set(user)

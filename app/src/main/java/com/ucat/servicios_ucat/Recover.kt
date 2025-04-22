@@ -46,7 +46,7 @@ fun Recover(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text("Recuperar contraseña", fontSize = 30.sp, fontWeight = FontWeight.Bold)
+            Text("RECUPERAR CONTRASEÑA", fontSize = 25.sp, fontWeight = FontWeight.Bold)
             Spacer(modifier = Modifier.height(76.dp))
 
             TextField(

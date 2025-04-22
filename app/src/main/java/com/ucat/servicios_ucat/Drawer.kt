@@ -77,7 +77,6 @@ fun PantallaConDrawer(
 fun DrawerContent(
     onReservar: () -> Unit,
     onMisReservas: () -> Unit,
-    onHorarios: () -> Unit,
     onAyuda: () -> Unit,
     onCerrarSesion: () -> Unit
 ) {
@@ -86,7 +85,6 @@ fun DrawerContent(
         Divider()
         DrawerItem("Reservar", onReservar)
         DrawerItem("Mis Reservas", onMisReservas)
-        DrawerItem("Horarios", onHorarios)
         DrawerItem("Ayuda", onAyuda)
         Spacer(modifier = Modifier.height(16.dp))
         Divider()

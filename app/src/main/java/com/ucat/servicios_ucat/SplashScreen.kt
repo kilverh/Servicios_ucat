@@ -2,6 +2,7 @@ package com.ucat.servicios_ucat
 
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
@@ -20,8 +21,18 @@ fun SplashScreen(modifier: Modifier = Modifier) {
     ConstraintLayout(
         modifier = Modifier.fillMaxSize()
     ) {
-        val (logo, versionText) = createRefs()
+        val (titleText, logo, versionText) = createRefs()
 
+        Text(
+            text = "SERVICIOS UCAT",
+            fontSize = 40.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color.White,
+            modifier = Modifier.constrainAs(titleText) {
+                bottom.linkTo(logo.top, margin = 16.dp)
+                centerHorizontallyTo(parent)
+            }
+        )
 
         Image(
             painter = painterResource(id = R.drawable.logo),
@@ -29,7 +40,6 @@ fun SplashScreen(modifier: Modifier = Modifier) {
             modifier = Modifier.constrainAs(logo) {
                 centerTo(parent)
             }
-
         )
 
         Text(
@@ -38,7 +48,7 @@ fun SplashScreen(modifier: Modifier = Modifier) {
             fontWeight = FontWeight.Light,
             color = Color.White,
             modifier = Modifier.constrainAs(versionText) {
-                bottom.linkTo(parent.bottom, margin = 84.dp)
+                top.linkTo(logo.bottom, margin = 16.dp)
                 centerHorizontallyTo(parent)
             }
         )

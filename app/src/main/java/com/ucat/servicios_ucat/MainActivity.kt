@@ -80,7 +80,6 @@ fun AppContent() {
                         mostrarReserva = false
                         mostrarGestionReservas = true
                     },
-                    onHorarios = {},
                     onAyuda = {
                         mostrarReserva = false
                         mostrarGestionReservas = false
@@ -114,7 +113,6 @@ fun AppContent() {
                         mostrarReserva = true
                     },
                     onMisReservas = {},
-                    onHorarios = {},
                     onAyuda = {
                         mostrarReserva = false
                         mostrarGestionReservas = false
@@ -146,7 +144,6 @@ fun AppContent() {
                         mostrarAyuda = false
                         mostrarGestionReservas = true
                     },
-                    onHorarios = {},
                     onAyuda = {
                         mostrarReserva = false
                         mostrarGestionReservas = false
@@ -179,9 +176,6 @@ fun AppContent() {
                         mostrarDashboard = false
                         mostrarGestionReservas = true
                     },
-                    onHorarios = {
-                        // Aquí puedes navegar a una pantalla de horarios si la implementas
-                    },
                     onAyuda = {
                         mostrarReserva = false
                         mostrarGestionReservas = false
@@ -203,9 +197,6 @@ fun AppContent() {
                     onIrAGestionarReservas = {
                         mostrarDashboard = false
                         mostrarGestionReservas = true
-                    },
-                    onIrAHorarios = {
-                        // Pendiente: implementar pantalla de horarios
                     },
                     onIrAAyuda = {
                         mostrarReserva = false

@@ -100,7 +100,7 @@ fun Login(
                             } else {
                                 Toast.makeText(
                                     context,
-                                    "Parece que el correo o la contraseña son incorrectos.",
+                                    "UPS!!! Parece que el correo o la contraseña son incorrectos.",
                                     Toast.LENGTH_LONG
                                 ).show()
                                 onError("Login fallido")

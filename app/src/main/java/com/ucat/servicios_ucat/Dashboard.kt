@@ -22,7 +22,6 @@ fun DashboardContent(
     modifier: Modifier = Modifier,
     onIrAReservar: () -> Unit,
     onIrAGestionarReservas: () -> Unit,
-    onIrAHorarios: () -> Unit,
     onIrAAyuda: () -> Unit,
     onIrACerrar: () -> Unit
 ) {
@@ -63,8 +62,7 @@ fun DashboardContent(
             ) {
                 Text("MIS RESERVAS")
             }
-            Spacer(modifier = Modifier.height(24.dp))
-            MenuButton("HORARIOS") { /* TODO: Navegar a horarios */ }
+
             Spacer(modifier = Modifier.height(24.dp))
             Button(
                 onClick = onIrAAyuda,
@@ -86,21 +84,5 @@ fun DashboardContent(
                 Text("CERRAR SESIÓN")
             }
         }
-    }
-}
-
-
-
-@Composable
-fun MenuButton(text: String, onClick: () -> Unit) {
-    Button(
-        onClick = onClick,
-        modifier = Modifier
-            .width(250.dp)
-            .height(60.dp),
-        colors = ButtonDefaults.buttonColors(containerColor = Color.White),
-        shape = RectangleShape
-    ) {
-        Text(text = text, color = BlueButton)
     }
 }
