@@ -37,7 +37,7 @@ fun Booking(
     val db = FirebaseFirestore.getInstance()
 
     val tipoList = listOf("Cancha", "Juego de mesa", "Instrumento", "Balón")
-    val horas = listOf("08:00 - 09:00", "09:00 - 10:00", "10:00 - 11:00", "11:00 - 12:00", "12:00 - 1:00", "2:00 - 3:00", "3:00 - 4:00", "4:00 - 5:00", "5:00 - 6:00", "6:00 - 7:00", "7:00 - 8:00")
+    val horas = listOf("08:00", "09:00", "10:00", "11:00", "12:00", "2:00", "3:00", "4:00", "5:00", "6:00", "7:00")
     val juegos = listOf("UNO", "Monopoly", "Jenga", "Ajedrez", "Parqués 4 puestos", "Parqués 6 puestos", "Damas Chinas", "Rummi", "Clue", "Conecta 4", "Pictureka", "Astucia Naval", "Superbanco Colombia", "Invasión", "Scrabble", "Laberinto", "Risk", "Pasaporte al Mundo", "Domino", "Cranium", "Twister", "Cubeez", "Spot It", "Dos", "Código Secreto")
     val instrumentos = listOf("Guitarra", "Ukelele")
     val balones = listOf("Voleibol", "Fútbol", "Micro", "Baloncesto")
@@ -97,7 +97,6 @@ fun Booking(
                 "Cancha" -> {
                     DropdownField("Deporte", deportes, deporte.value) { deporte.value = it }
 
-                    // Mostrar solo mesas de Pin Pon si se elige ese deporte
                     val canchasFiltradas = when (deporte.value) {
                         "Pin Pon" -> listOf("Mesa Pin Pon 1", "Mesa Pin Pon 2")
                         else -> listOf("Claustro", "Carrera 13")

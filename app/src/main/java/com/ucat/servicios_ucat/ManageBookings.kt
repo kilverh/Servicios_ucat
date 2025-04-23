@@ -1,7 +1,7 @@
 @file:OptIn(ExperimentalMaterial3Api::class)
 package com.ucat.servicios_ucat
 
-import android.app.DatePickerDialog
+
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -11,6 +11,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
@@ -36,8 +37,7 @@ data class Reserva(
     val tipo: String = "",
     val recurso: String = "",
     val fecha: String = "",
-    val hora: String = "",
-    val carrera: String = ""
+    val hora: String = ""
 )
 
 @Composable
@@ -52,10 +52,11 @@ fun ManageBookings(onVolverAlMenu: () -> Unit) {
     var horaEdit by remember { mutableStateOf("") }
     var tipoEdit by remember { mutableStateOf("") }
     var recursoEdit by remember { mutableStateOf("") }
-    var carreraEdit by remember { mutableStateOf("") }
     var reservaEdit by remember { mutableStateOf<Reserva?>(null) }
 
     var recursosDisponibles by remember { mutableStateOf(listOf<String>()) }
+    val tipos = listOf("Juego de mesa", "Instrumento", "Balón", "Cancha")
+    val horasDisponibles = listOf("08:00", "09:00", "10:00", "11:00", "12:00", "2:00", "3:00", "4:00", "5:00", "6:00", "7:00")
 
     fun cargarReservas() {
         db.collection("reservas")
@@ -76,8 +77,7 @@ fun ManageBookings(onVolverAlMenu: () -> Unit) {
                         tipo = tipo,
                         recurso = nombreRecurso,
                         fecha = it.getString("fecha") ?: "",
-                        hora = it.getString("hora") ?: "",
-                        carrera = it.getString("carrera") ?: ""
+                        hora = it.getString("hora") ?: ""
                     )
                 }
             }
@@ -160,7 +160,6 @@ fun ManageBookings(onVolverAlMenu: () -> Unit) {
                                         horaEdit = reserva.hora
                                         tipoEdit = reserva.tipo
                                         recursoEdit = reserva.recurso
-                                        carreraEdit = reserva.carrera
                                         cargarRecursosPorTipo(reserva.tipo)
                                     }) {
                                         Icon(Icons.Default.Edit, contentDescription = "Editar")
@@ -168,7 +167,11 @@ fun ManageBookings(onVolverAlMenu: () -> Unit) {
                                     IconButton(onClick = {
                                         db.collection("reservas").document(reserva.id).delete()
                                             .addOnSuccessListener {
-                                                Toast.makeText(context, "Reserva eliminada", Toast.LENGTH_SHORT).show()
+                                                Toast.makeText(
+                                                    context,
+                                                    "Reserva eliminada",
+                                                    Toast.LENGTH_SHORT
+                                                ).show()
                                                 cargarReservas()
                                             }
                                     }) {
@@ -180,6 +183,14 @@ fun ManageBookings(onVolverAlMenu: () -> Unit) {
                     }
                 }
             } else {
+                var expandedTipo by remember { mutableStateOf(false) }
+                var expandedHora by remember { mutableStateOf(false) }
+                var expandedRecurso by remember { mutableStateOf(false) }
+                var expandedDeporte by remember { mutableStateOf(false) }
+                val deportes = listOf("Fútbol", "Baloncesto", "Voleibol", "Pin Pon")
+
+                var deporteEdit by remember { mutableStateOf("") }
+
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -194,41 +205,109 @@ fun ManageBookings(onVolverAlMenu: () -> Unit) {
 
                     Spacer(modifier = Modifier.height(16.dp))
 
+                    // TIPO
+                    ExposedDropdownMenuBox(
+                        expanded = expandedTipo,
+                        onExpandedChange = { expandedTipo = !expandedTipo }) {
+                        TextField(
+                            value = tipoEdit,
+                            onValueChange = {},
+                            readOnly = true,
+                            label = { Text("Tipo") },
+                            modifier = Modifier.menuAnchor().fillMaxWidth(),
+                            trailingIcon = {
+                                IconButton(onClick = { expandedTipo = true }) {
+                                    Icon(Icons.Default.ArrowDropDown, contentDescription = null)
+                                }
+                            }
+                        )
+                        ExposedDropdownMenu(
+                            expanded = expandedTipo,
+                            onDismissRequest = { expandedTipo = false }
+                        ) {
+                            tipos.forEach { tipo ->
+                                DropdownMenuItem(
+                                    text = { Text(tipo) },
+                                    onClick = {
+                                        tipoEdit = tipo
+                                        recursoEdit = ""
+                                        deporteEdit = ""
+                                        cargarRecursosPorTipo(tipo)
+                                        expandedTipo = false
+                                    }
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    // FECHA
                     FechaPickerField(fechaEdit) { fechaEdit = it }
 
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    TextField(
-                        value = horaEdit,
-                        onValueChange = { horaEdit = it },
-                        label = { Text("Hora") },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(60.dp)
-                    )
+                    // HORA
+                    ExposedDropdownMenuBox(
+                        expanded = expandedHora,
+                        onExpandedChange = { expandedHora = !expandedHora }) {
+                        TextField(
+                            value = horaEdit,
+                            onValueChange = {},
+                            readOnly = true,
+                            label = { Text("Hora") },
+                            modifier = Modifier.menuAnchor().fillMaxWidth(),
+                            trailingIcon = {
+                                IconButton(onClick = { expandedHora = true }) {
+                                    Icon(Icons.Default.ArrowDropDown, contentDescription = null)
+                                }
+                            }
+                        )
+                        ExposedDropdownMenu(
+                            expanded = expandedHora,
+                            onDismissRequest = { expandedHora = false }
+                        ) {
+                            horasDisponibles.forEach { hora ->
+                                DropdownMenuItem(
+                                    text = { Text(hora) },
+                                    onClick = {
+                                        horaEdit = hora
+                                        expandedHora = false
+                                    }
+                                )
+                            }
+                        }
+                    }
 
                     Spacer(modifier = Modifier.height(8.dp))
 
+                    // RECURSO
                     if (recursosDisponibles.isNotEmpty()) {
-                        var expanded by remember { mutableStateOf(false) }
-                        ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = !expanded }) {
+                        ExposedDropdownMenuBox(
+                            expanded = expandedRecurso,
+                            onExpandedChange = { expandedRecurso = !expandedRecurso }) {
                             TextField(
                                 value = recursoEdit,
                                 onValueChange = {},
                                 readOnly = true,
                                 label = { Text("Recurso") },
-                                modifier = Modifier.fillMaxWidth()
+                                modifier = Modifier.menuAnchor().fillMaxWidth(),
+                                trailingIcon = {
+                                    IconButton(onClick = { expandedRecurso = true }) {
+                                        Icon(Icons.Default.ArrowDropDown, contentDescription = null)
+                                    }
+                                }
                             )
                             ExposedDropdownMenu(
-                                expanded = expanded,
-                                onDismissRequest = { expanded = false }
+                                expanded = expandedRecurso,
+                                onDismissRequest = { expandedRecurso = false }
                             ) {
                                 recursosDisponibles.forEach { recurso ->
                                     DropdownMenuItem(
                                         text = { Text(recurso) },
                                         onClick = {
                                             recursoEdit = recurso
-                                            expanded = false
+                                            expandedRecurso = false
                                         }
                                     )
                                 }
@@ -236,21 +315,42 @@ fun ManageBookings(onVolverAlMenu: () -> Unit) {
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(8.dp))
-
+                    // DEPORTE (solo si tipo es Cancha)
                     if (tipoEdit == "Cancha") {
-                        TextField(
-                            value = carreraEdit,
-                            onValueChange = { carreraEdit = it },
-                            label = { Text("Carrera") },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(60.dp)
-                        )
-
                         Spacer(modifier = Modifier.height(8.dp))
+                        ExposedDropdownMenuBox(
+                            expanded = expandedDeporte,
+                            onExpandedChange = { expandedDeporte = !expandedDeporte }) {
+                            TextField(
+                                value = deporteEdit,
+                                onValueChange = {},
+                                readOnly = true,
+                                label = { Text("Deporte") },
+                                modifier = Modifier.menuAnchor().fillMaxWidth(),
+                                trailingIcon = {
+                                    IconButton(onClick = { expandedDeporte = true }) {
+                                        Icon(Icons.Default.ArrowDropDown, contentDescription = null)
+                                    }
+                                }
+                            )
+                            ExposedDropdownMenu(
+                                expanded = expandedDeporte,
+                                onDismissRequest = { expandedDeporte = false }
+                            ) {
+                                deportes.forEach { deporte ->
+                                    DropdownMenuItem(
+                                        text = { Text(deporte) },
+                                        onClick = {
+                                            deporteEdit = deporte
+                                            expandedDeporte = false
+                                        }
+                                    )
+                                }
+                            }
+                        }
                     }
 
+                    // BOTONES
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -259,14 +359,19 @@ fun ManageBookings(onVolverAlMenu: () -> Unit) {
                     ) {
                         Button(
                             onClick = {
-                                if (fechaEdit.isBlank() || horaEdit.isBlank() || recursoEdit.isBlank()) {
-                                    Toast.makeText(context, "Por favor completa todos los campos", Toast.LENGTH_SHORT).show()
+                                if (fechaEdit.isBlank() || horaEdit.isBlank() || recursoEdit.isBlank() || (tipoEdit == "Cancha" && deporteEdit.isBlank())) {
+                                    Toast.makeText(
+                                        context,
+                                        "Por favor completa todos los campos",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
                                     return@Button
                                 }
 
                                 val data = mutableMapOf(
                                     "fecha" to fechaEdit,
-                                    "hora" to horaEdit
+                                    "hora" to horaEdit,
+                                    "tipo" to tipoEdit
                                 )
 
                                 when (tipoEdit) {
@@ -275,14 +380,18 @@ fun ManageBookings(onVolverAlMenu: () -> Unit) {
                                     "Balón" -> data["balon"] = recursoEdit
                                     "Cancha" -> {
                                         data["cancha"] = recursoEdit
-                                        data["carrera"] = carreraEdit
+                                        data["deporte"] = deporteEdit
                                     }
                                 }
 
                                 db.collection("reservas").document(reservaEdit!!.id)
                                     .update(data as Map<String, Any>)
                                     .addOnSuccessListener {
-                                        Toast.makeText(context, "Reserva actualizada", Toast.LENGTH_SHORT).show()
+                                        Toast.makeText(
+                                            context,
+                                            "Reserva actualizada",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
                                         reservaEdit = null
                                         cargarReservas()
                                     }
