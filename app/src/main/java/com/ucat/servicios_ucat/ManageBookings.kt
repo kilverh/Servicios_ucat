@@ -1,3 +1,4 @@
+@file:OptIn(ExperimentalMaterial3Api::class)
 package com.ucat.servicios_ucat
 
 import android.app.DatePickerDialog
@@ -28,7 +29,6 @@ import androidx.compose.ui.unit.sp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.ucat.servicios_ucat.ui.theme.BlueInstitutional
-import java.text.SimpleDateFormat
 import java.util.*
 
 data class Reserva(
@@ -37,7 +37,7 @@ data class Reserva(
     val recurso: String = "",
     val fecha: String = "",
     val hora: String = "",
-    val carrera: String = ""  // Información adicional para canchas
+    val carrera: String = ""
 )
 
 @Composable
@@ -54,6 +54,8 @@ fun ManageBookings(onVolverAlMenu: () -> Unit) {
     var recursoEdit by remember { mutableStateOf("") }
     var carreraEdit by remember { mutableStateOf("") }
     var reservaEdit by remember { mutableStateOf<Reserva?>(null) }
+
+    var recursosDisponibles by remember { mutableStateOf(listOf<String>()) }
 
     fun cargarReservas() {
         db.collection("reservas")
@@ -81,37 +83,77 @@ fun ManageBookings(onVolverAlMenu: () -> Unit) {
             }
     }
 
+    fun cargarRecursosPorTipo(tipo: String) {
+        db.collection("inventario").document(tipo).get()
+            .addOnSuccessListener { doc ->
+                recursosDisponibles = when (tipo) {
+                    "Juego de mesa" -> (doc.get("juegos") as? List<String>) ?: emptyList()
+                    "Instrumento" -> (doc.get("instrumentos") as? List<String>) ?: emptyList()
+                    "Balón" -> (doc.get("balones") as? List<String>) ?: emptyList()
+                    "Cancha" -> (doc.get("canchas") as? List<String>) ?: emptyList()
+                    else -> emptyList()
+                }
+            }
+    }
+
     LaunchedEffect(Unit) {
         cargarReservas()
     }
 
-    Box(modifier = Modifier.fillMaxSize().background(BlueInstitutional)) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(BlueInstitutional)
+    ) {
         Image(
             painter = painterResource(id = R.drawable.logo),
             contentDescription = null,
-            modifier = Modifier.fillMaxSize().alpha(0.8f),
+            modifier = Modifier
+                .fillMaxSize()
+                .alpha(0.8f),
             contentScale = ContentScale.FillWidth
         )
 
         Column(
-            modifier = Modifier.padding(36.dp).fillMaxSize(),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(36.dp),
             verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text("TUS RESERVAS", fontSize = 30.sp, fontWeight = FontWeight.Bold, color = Color.White)
+            Text(
+                text = "TUS RESERVAS",
+                fontSize = 30.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.White
+            )
+
             Spacer(modifier = Modifier.height(16.dp))
 
             if (reservaEdit == null) {
-                LazyColumn(modifier = Modifier.fillMaxHeight(0.8f)) {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
                     items(reservas) { reserva ->
-                        Card(modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp), elevation = CardDefaults.cardElevation()) {
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 4.dp),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                        ) {
                             Column(modifier = Modifier.padding(16.dp)) {
                                 Text("Tipo: ${reserva.tipo}")
                                 Text("Recurso: ${reserva.recurso}")
                                 Text("Fecha: ${reserva.fecha}")
                                 Text("Hora: ${reserva.hora}")
 
-                                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(top = 8.dp),
+                                    horizontalArrangement = Arrangement.End
+                                ) {
                                     IconButton(onClick = {
                                         reservaEdit = reserva
                                         fechaEdit = reserva.fecha
@@ -119,14 +161,16 @@ fun ManageBookings(onVolverAlMenu: () -> Unit) {
                                         tipoEdit = reserva.tipo
                                         recursoEdit = reserva.recurso
                                         carreraEdit = reserva.carrera
+                                        cargarRecursosPorTipo(reserva.tipo)
                                     }) {
                                         Icon(Icons.Default.Edit, contentDescription = "Editar")
                                     }
                                     IconButton(onClick = {
-                                        db.collection("reservas").document(reserva.id).delete().addOnSuccessListener {
-                                            Toast.makeText(context, "Reserva eliminada", Toast.LENGTH_SHORT).show()
-                                            cargarReservas()
-                                        }
+                                        db.collection("reservas").document(reserva.id).delete()
+                                            .addOnSuccessListener {
+                                                Toast.makeText(context, "Reserva eliminada", Toast.LENGTH_SHORT).show()
+                                                cargarReservas()
+                                            }
                                     }) {
                                         Icon(Icons.Default.Delete, contentDescription = "Eliminar")
                                     }
@@ -136,30 +180,62 @@ fun ManageBookings(onVolverAlMenu: () -> Unit) {
                     }
                 }
             } else {
-                Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
-                    Text("Editar Reserva", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .verticalScroll(rememberScrollState())
+                ) {
+                    Text(
+                        text = "Editar Reserva",
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // Fecha editable
                     FechaPickerField(fechaEdit) { fechaEdit = it }
+
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    // Hora editable
                     TextField(
                         value = horaEdit,
                         onValueChange = { horaEdit = it },
                         label = { Text("Hora") },
-                        modifier = Modifier.fillMaxWidth().height(60.dp)
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(60.dp)
                     )
+
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    // Campos adicionales si deseas permitir editarlos también
-                    TextField(
-                        value = recursoEdit,
-                        onValueChange = { recursoEdit = it },
-                        label = { Text("Recurso") },
-                        modifier = Modifier.fillMaxWidth().height(60.dp)
-                    )
+                    if (recursosDisponibles.isNotEmpty()) {
+                        var expanded by remember { mutableStateOf(false) }
+                        ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = !expanded }) {
+                            TextField(
+                                value = recursoEdit,
+                                onValueChange = {},
+                                readOnly = true,
+                                label = { Text("Recurso") },
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                            ExposedDropdownMenu(
+                                expanded = expanded,
+                                onDismissRequest = { expanded = false }
+                            ) {
+                                recursosDisponibles.forEach { recurso ->
+                                    DropdownMenuItem(
+                                        text = { Text(recurso) },
+                                        onClick = {
+                                            recursoEdit = recurso
+                                            expanded = false
+                                        }
+                                    )
+                                }
+                            }
+                        }
+                    }
+
                     Spacer(modifier = Modifier.height(8.dp))
 
                     if (tipoEdit == "Cancha") {
@@ -167,16 +243,23 @@ fun ManageBookings(onVolverAlMenu: () -> Unit) {
                             value = carreraEdit,
                             onValueChange = { carreraEdit = it },
                             label = { Text("Carrera") },
-                            modifier = Modifier.fillMaxWidth().height(60.dp)
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(60.dp)
                         )
+
                         Spacer(modifier = Modifier.height(8.dp))
                     }
 
-                    // Botones
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 16.dp),
+                        horizontalArrangement = Arrangement.SpaceEvenly
+                    ) {
                         Button(
                             onClick = {
-                                if (fechaEdit.isBlank() || horaEdit.isBlank()) {
+                                if (fechaEdit.isBlank() || horaEdit.isBlank() || recursoEdit.isBlank()) {
                                     Toast.makeText(context, "Por favor completa todos los campos", Toast.LENGTH_SHORT).show()
                                     return@Button
                                 }
@@ -185,18 +268,28 @@ fun ManageBookings(onVolverAlMenu: () -> Unit) {
                                     "fecha" to fechaEdit,
                                     "hora" to horaEdit
                                 )
-                                if (tipoEdit == "Cancha") {
-                                    data["carrera"] = carreraEdit
+
+                                when (tipoEdit) {
+                                    "Juego de mesa" -> data["juego"] = recursoEdit
+                                    "Instrumento" -> data["instrumento"] = recursoEdit
+                                    "Balón" -> data["balon"] = recursoEdit
+                                    "Cancha" -> {
+                                        data["cancha"] = recursoEdit
+                                        data["carrera"] = carreraEdit
+                                    }
                                 }
 
-                                db.collection("reservas").document(reservaEdit!!.id).update(data as Map<String, Any>)
+                                db.collection("reservas").document(reservaEdit!!.id)
+                                    .update(data as Map<String, Any>)
                                     .addOnSuccessListener {
                                         Toast.makeText(context, "Reserva actualizada", Toast.LENGTH_SHORT).show()
                                         reservaEdit = null
                                         cargarReservas()
                                     }
                             },
-                            modifier = Modifier.width(160.dp).height(50.dp),
+                            modifier = Modifier
+                                .width(160.dp)
+                                .height(50.dp),
                             shape = RectangleShape
                         ) {
                             Text("Actualizar")
@@ -205,7 +298,9 @@ fun ManageBookings(onVolverAlMenu: () -> Unit) {
                         Button(
                             onClick = { reservaEdit = null },
                             colors = ButtonDefaults.buttonColors(containerColor = Color.Gray),
-                            modifier = Modifier.width(160.dp).height(50.dp),
+                            modifier = Modifier
+                                .width(160.dp)
+                                .height(50.dp),
                             shape = RectangleShape
                         ) {
                             Text("Cancelar")

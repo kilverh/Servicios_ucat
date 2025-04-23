@@ -4,7 +4,6 @@ import android.app.DatePickerDialog
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
@@ -24,7 +23,6 @@ import androidx.compose.ui.unit.sp
 import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import com.ucat.servicios_ucat.ui.theme.BlueButton
 import com.ucat.servicios_ucat.ui.theme.BlueInstitutional
 import java.text.SimpleDateFormat
 import java.util.*
@@ -54,6 +52,19 @@ fun Booking(
     val balon = remember { mutableStateOf("") }
     val deporte = remember { mutableStateOf("") }
     val cancha = remember { mutableStateOf("") }
+    val loading = remember { mutableStateOf(false) }
+
+    // Función para limpiar el formulario
+    val limpiarFormulario = {
+        tipo.value = ""
+        fecha.value = ""
+        hora.value = ""
+        juego.value = ""
+        instrumento.value = ""
+        balon.value = ""
+        deporte.value = ""
+        cancha.value = ""
+    }
 
     Box(modifier = Modifier.fillMaxSize().background(BlueInstitutional)) {
         Image(
@@ -85,7 +96,16 @@ fun Booking(
                 "Balón" -> DropdownField("Balón", balones, balon.value) { balon.value = it }
                 "Cancha" -> {
                     DropdownField("Deporte", deportes, deporte.value) { deporte.value = it }
-                    DropdownField("Cancha", canchas, cancha.value) { cancha.value = it }
+
+                    // Mostrar solo mesas de Pin Pon si se elige ese deporte
+                    val canchasFiltradas = when (deporte.value) {
+                        "Pin Pon" -> listOf("Mesa Pin Pon 1", "Mesa Pin Pon 2")
+                        else -> listOf("Claustro", "Carrera 13")
+                    }
+
+                    if (deporte.value.isNotBlank()) {
+                        DropdownField("Cancha", canchasFiltradas, cancha.value) { cancha.value = it }
+                    }
                 }
             }
 
@@ -93,6 +113,7 @@ fun Booking(
 
             Button(
                 onClick = {
+                    if (loading.value) return@Button
                     if (tipo.value.isBlank() || fecha.value.isBlank() || hora.value.isBlank() ||
                         (tipo.value == "Cancha" && (cancha.value.isBlank() || deporte.value.isBlank())) ||
                         (tipo.value == "Juego de mesa" && juego.value.isBlank()) ||
@@ -111,17 +132,39 @@ fun Booking(
                         return@Button
                     }
 
+                    loading.value = true
+
                     when (tipo.value) {
-                        "Cancha" -> reservarCancha(db, context, fecha.value, hora.value, deporte.value, cancha.value)
-                        "Juego de mesa" -> validarYReservarObjeto(db, context, fecha.value, hora.value, juego.value, "Juego de mesa")
-                        "Instrumento" -> validarYReservarObjeto(db, context, fecha.value, hora.value, instrumento.value, "Instrumento")
-                        "Balón" -> validarYReservarObjeto(db, context, fecha.value, hora.value, balon.value, "Balón")
+                        "Cancha" -> reservarCancha(
+                            db, context, fecha.value, hora.value, deporte.value, cancha.value, limpiarFormulario, {
+                                loading.value = false
+                            }
+                        )
+                        "Juego de mesa" -> reservarObjeto(
+                            db, context, fecha.value, hora.value, juego.value, "Juego de mesa", limpiarFormulario, {
+                                loading.value = false
+                            }
+                        )
+                        "Instrumento" -> reservarObjeto(
+                            db, context, fecha.value, hora.value, instrumento.value, "Instrumento", limpiarFormulario, {
+                                loading.value = false
+                            }
+                        )
+                        "Balón" -> reservarObjeto(
+                            db, context, fecha.value, hora.value, balon.value, "Balón", limpiarFormulario, {
+                                loading.value = false
+                            }
+                        )
                     }
                 },
                 modifier = Modifier.width(190.dp).height(50.dp),
                 shape = RectangleShape
             ) {
-                Text("Reservar")
+                if (loading.value) {
+                    CircularProgressIndicator(color = Color.White, strokeWidth = 2.dp, modifier = Modifier.size(24.dp))
+                } else {
+                    Text("Reservar")
+                }
             }
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -191,7 +234,16 @@ fun FechaPickerField(fecha: String, onFechaSeleccionada: (String) -> Unit) {
     )
 }
 
-fun reservarCancha(db: FirebaseFirestore, context: android.content.Context, fecha: String, hora: String, deporte: String, cancha: String) {
+fun reservarCancha(
+    db: FirebaseFirestore,
+    context: android.content.Context,
+    fecha: String,
+    hora: String,
+    deporte: String,
+    cancha: String,
+    limpiarFormulario: () -> Unit,
+    onFinish: () -> Unit
+) {
     val docRef = db.collection("reservas")
         .whereEqualTo("tipo", "Cancha")
         .whereEqualTo("fecha", fecha)
@@ -211,57 +263,109 @@ fun reservarCancha(db: FirebaseFirestore, context: android.content.Context, fech
                 "uid" to firebaseAuth.currentUser?.uid
             )
 
+            // Si el deporte requiere balón
+            val balonRelacionado = when (deporte) {
+                "Fútbol" -> "Fútbol"
+                "Baloncesto" -> "Baloncesto"
+                "Voleibol" -> "Voleibol"
+                else -> null
+            }
+
+            if (balonRelacionado != null) {
+                reservarObjeto(
+                    db,
+                    context,
+                    fecha,
+                    hora,
+                    balonRelacionado,
+                    "Balón",
+                    limpiarFormulario = {}, // no limpiar doble
+                    onFinish = {}
+                )
+            }
+
             db.collection("reservas")
                 .add(reserva)
                 .addOnSuccessListener {
                     Toast.makeText(context, "Reserva de cancha exitosa", Toast.LENGTH_SHORT).show()
+                    limpiarFormulario()
                 }
                 .addOnFailureListener {
                     Toast.makeText(context, "Error al reservar cancha", Toast.LENGTH_SHORT).show()
                 }
+                .addOnCompleteListener { onFinish() }
         } else {
             Toast.makeText(context, "Esta cancha ya está reservada en ese horario", Toast.LENGTH_SHORT).show()
+            onFinish()
         }
     }.addOnFailureListener {
         Toast.makeText(context, "Error al verificar disponibilidad de la cancha", Toast.LENGTH_SHORT).show()
+        onFinish()
     }
 }
 
-fun validarYReservarObjeto(db: FirebaseFirestore, context: android.content.Context, fecha: String, hora: String, nombre: String, tipo: String) {
-    val inventarioRef = db.collection("inventario").document(nombre)
+
+fun reservarObjeto(
+    db: FirebaseFirestore,
+    context: android.content.Context,
+    fecha: String,
+    hora: String,
+    nombreObjeto: String,
+    tipo: String,
+    limpiarFormulario: () -> Unit,
+    onFinish: () -> Unit
+) {
+    val inventarioRef = db.collection("inventario").document(nombreObjeto)
+    val reservasRef = db.collection("reservas")
     val firebaseAuth = FirebaseAuth.getInstance()
 
     inventarioRef.get().addOnSuccessListener { document ->
         val cantidadDisponible = document.getLong("cantidadDisponible") ?: 0L
 
-        if (cantidadDisponible > 0) {
-            val reserva = hashMapOf(
-                "tipo" to tipo,
-                "fecha" to fecha,
-                "hora" to hora,
-                "uid" to firebaseAuth.currentUser?.uid,
-                (if (tipo == "Instrumento") "instrumento" else if (tipo == "Balón") "balon" else "juego") to nombre,
-                "timestamp" to Timestamp.now()
+        reservasRef
+            .whereEqualTo("tipo", tipo)
+            .whereEqualTo("fecha", fecha)
+            .whereEqualTo("hora", hora)
+            .whereEqualTo(
+                if (tipo == "Instrumento") "instrumento"
+                else if (tipo == "Balón") "balon"
+                else "juego", nombreObjeto
             )
+            .get()
+            .addOnSuccessListener { resultadoReservas ->
+                val cantidadReservadaEnHorario = resultadoReservas.size()
 
-            db.collection("reservas")
-                .add(reserva)
-                .addOnSuccessListener {
-                    inventarioRef.update("cantidadDisponible", cantidadDisponible - 1)
+                if (cantidadReservadaEnHorario < cantidadDisponible) {
+                    val reserva = hashMapOf(
+                        "tipo" to tipo,
+                        "fecha" to fecha,
+                        "hora" to hora,
+                        "uid" to firebaseAuth.currentUser?.uid,
+                        (if (tipo == "Instrumento") "instrumento" else if (tipo == "Balón") "balon" else "juego") to nombreObjeto,
+                        "timestamp" to Timestamp.now()
+                    )
+
+                    reservasRef.add(reserva)
                         .addOnSuccessListener {
-                            Toast.makeText(context, "Reserva de $tipo exitosa", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, "Reserva de $tipo ($nombreObjeto) exitosa", Toast.LENGTH_SHORT).show()
+                            limpiarFormulario()
                         }
                         .addOnFailureListener {
-                            Toast.makeText(context, "Reserva realizada, pero error al actualizar inventario", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, "Error al reservar $tipo", Toast.LENGTH_SHORT).show()
                         }
+                        .addOnCompleteListener { onFinish() }
+                } else {
+                    Toast.makeText(context, "$tipo ($nombreObjeto) no disponible en este horario", Toast.LENGTH_SHORT).show()
+                    onFinish()
                 }
-                .addOnFailureListener {
-                    Toast.makeText(context, "Error al reservar $tipo", Toast.LENGTH_SHORT).show()
-                }
-        } else {
-            Toast.makeText(context, "$tipo no disponible para reservar", Toast.LENGTH_SHORT).show()
-        }
+            }
+            .addOnFailureListener {
+                Toast.makeText(context, "Error al verificar disponibilidad de $tipo", Toast.LENGTH_SHORT).show()
+                onFinish()
+            }
     }.addOnFailureListener {
         Toast.makeText(context, "Error al consultar inventario de $tipo", Toast.LENGTH_SHORT).show()
+        onFinish()
     }
 }
+
