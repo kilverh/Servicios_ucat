@@ -56,8 +56,6 @@ fun RegistroScreen(
     fun esCorreoValido(correo: String): Boolean {
 
         val emailRegex = "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.(com|co)$"
-
-
         return correo.matches(emailRegex.toRegex()) && correo.endsWith("@ucatolica.edu.co")
     }
     Box(modifier = Modifier.fillMaxSize()) {

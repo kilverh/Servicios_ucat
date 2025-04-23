@@ -48,7 +48,7 @@ fun SplashScreen(modifier: Modifier = Modifier) {
             fontWeight = FontWeight.Light,
             color = Color.White,
             modifier = Modifier.constrainAs(versionText) {
-                top.linkTo(logo.bottom, margin = 16.dp)
+                top.linkTo(logo.bottom, margin = 96.dp)
                 centerHorizontallyTo(parent)
             }
         )

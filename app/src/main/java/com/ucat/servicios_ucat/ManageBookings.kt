@@ -4,7 +4,6 @@ import android.app.DatePickerDialog
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -38,7 +37,7 @@ data class Reserva(
     val recurso: String = "",
     val fecha: String = "",
     val hora: String = "",
-    val carrera: String = ""
+    val carrera: String = ""  // Información adicional para canchas
 )
 
 @Composable
@@ -151,7 +150,6 @@ fun ManageBookings(onVolverAlMenu: () -> Unit) {
                         onValueChange = { horaEdit = it },
                         label = { Text("Hora") },
                         modifier = Modifier.fillMaxWidth().height(60.dp)
-
                     )
                     Spacer(modifier = Modifier.height(8.dp))
 

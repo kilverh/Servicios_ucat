@@ -181,10 +181,10 @@ fun FechaPickerField(fecha: String, onFechaSeleccionada: (String) -> Unit) {
         readOnly = true,
         trailingIcon = {
             IconButton(onClick = { datePickerDialog.show() }) {
-                    Image(
-                        painter = painterResource( R.drawable.calendar),
-                        contentDescription = null
-                    )
+                Image(
+                    painter = painterResource( R.drawable.calendar),
+                    contentDescription = null
+                )
             }
         },
         modifier = Modifier.width(380.dp).height(60.dp)
@@ -265,5 +265,3 @@ fun validarYReservarObjeto(db: FirebaseFirestore, context: android.content.Conte
         Toast.makeText(context, "Error al consultar inventario de $tipo", Toast.LENGTH_SHORT).show()
     }
 }
-
-
