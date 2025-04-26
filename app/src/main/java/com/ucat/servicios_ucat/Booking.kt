@@ -4,9 +4,9 @@ import android.app.DatePickerDialog
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -30,19 +30,18 @@ import java.util.*
 @Composable
 fun Booking(
     modifier: Modifier = Modifier,
-    onReservaExitosa: () -> Unit,
-    onVolverAlMenu: () -> Unit
+    onReservaExitosa: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val db = FirebaseFirestore.getInstance()
+    val firebaseAuth = FirebaseAuth.getInstance()
 
     val tipoList = listOf("Cancha", "Juego de mesa", "Instrumento", "Balón")
-    val horas = listOf("08:00", "09:00", "10:00", "11:00", "12:00", "2:00", "3:00", "4:00", "5:00", "6:00", "7:00")
+    val horas = listOf("08:00", "09:00", "10:00", "11:00", "12:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00")
     val juegos = listOf("UNO", "Monopoly", "Jenga", "Ajedrez", "Parqués 4 puestos", "Parqués 6 puestos", "Damas Chinas", "Rummi", "Clue", "Conecta 4", "Pictureka", "Astucia Naval", "Superbanco Colombia", "Invasión", "Scrabble", "Laberinto", "Risk", "Pasaporte al Mundo", "Domino", "Cranium", "Twister", "Cubeez", "Spot It", "Dos", "Código Secreto")
     val instrumentos = listOf("Guitarra", "Ukelele")
     val balones = listOf("Voleibol", "Fútbol", "Micro", "Baloncesto")
     val deportes = listOf("Fútbol", "Baloncesto", "Voleibol", "Pin Pon")
-    val canchas = listOf("Claustro", "Carrera 13", "Mesa Pin Pon 1", "Mesa Pin Pon 2")
 
     val tipo = remember { mutableStateOf("") }
     val fecha = remember { mutableStateOf("") }
@@ -53,6 +52,19 @@ fun Booking(
     val deporte = remember { mutableStateOf("") }
     val cancha = remember { mutableStateOf("") }
     val loading = remember { mutableStateOf(false) }
+    val reservasHoy = remember { mutableStateOf(0) }
+
+    // Verificar reservas existentes al montar el componente
+    LaunchedEffect(Unit) {
+        val hoy = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(Date())
+        db.collection("reservas")
+            .whereEqualTo("uid", firebaseAuth.currentUser?.uid)
+            .whereEqualTo("fecha", hoy)
+            .get()
+            .addOnSuccessListener { result ->
+                reservasHoy.value = result.size()
+            }
+    }
 
     // Función para limpiar el formulario
     val limpiarFormulario = {
@@ -66,7 +78,72 @@ fun Booking(
         cancha.value = ""
     }
 
-    Box(modifier = Modifier.fillMaxSize().background(BlueInstitutional)) {
+    fun continuarReserva() {
+        // Validación de fecha/hora futura
+        val formatoFecha = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+        val formatoHora = SimpleDateFormat("HH:mm", Locale.getDefault())
+        val ahora = Calendar.getInstance()
+
+        try {
+            val fechaSeleccionada = formatoFecha.parse(fecha.value) ?: return
+            val horaSeleccionadaStr = if (hora.value.length == 4) "0${hora.value}" else hora.value
+            val horaSeleccionada = formatoHora.parse(horaSeleccionadaStr) ?: return
+
+            val calendarioSeleccionado = Calendar.getInstance().apply {
+                time = fechaSeleccionada
+                set(Calendar.HOUR_OF_DAY, horaSeleccionada.hours)
+                set(Calendar.MINUTE, horaSeleccionada.minutes)
+            }
+
+            // Validar que no sea domingo
+            if (calendarioSeleccionado.get(Calendar.DAY_OF_WEEK) == Calendar.SUNDAY) {
+                Toast.makeText(context, "No se pueden hacer reservas los domingos", Toast.LENGTH_SHORT).show()
+                return
+            }
+
+            if (calendarioSeleccionado.before(ahora)) {
+                Toast.makeText(context, "Debes seleccionar una fecha y hora futura", Toast.LENGTH_SHORT).show()
+                return
+            }
+
+            loading.value = true
+
+            when (tipo.value) {
+                "Cancha" -> reservarCancha(
+                    db, context, fecha.value, hora.value, deporte.value, cancha.value, limpiarFormulario, {
+                        loading.value = false
+                        reservasHoy.value++
+                        onReservaExitosa()
+                    }
+                )
+                "Juego de mesa" -> reservarObjeto(
+                    db, context, fecha.value, hora.value, juego.value, "Juego de mesa", limpiarFormulario, {
+                        loading.value = false
+                        reservasHoy.value++
+                        onReservaExitosa()
+                    }
+                )
+                "Instrumento" -> reservarObjeto(
+                    db, context, fecha.value, hora.value, instrumento.value, "Instrumento", limpiarFormulario, {
+                        loading.value = false
+                        reservasHoy.value++
+                        onReservaExitosa()
+                    }
+                )
+                "Balón" -> reservarObjeto(
+                    db, context, fecha.value, hora.value, balon.value, "Balón", limpiarFormulario, {
+                        loading.value = false
+                        reservasHoy.value++
+                        onReservaExitosa()
+                    }
+                )
+            }
+        } catch (e: Exception) {
+            Toast.makeText(context, "Error al validar fecha/hora", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    Box(modifier = modifier.fillMaxSize().background(BlueInstitutional)) {
         Image(
             painter = painterResource(id = R.drawable.logo),
             contentDescription = null,
@@ -113,6 +190,8 @@ fun Booking(
             Button(
                 onClick = {
                     if (loading.value) return@Button
+
+                    // Validación de campos obligatorios
                     if (tipo.value.isBlank() || fecha.value.isBlank() || hora.value.isBlank() ||
                         (tipo.value == "Cancha" && (cancha.value.isBlank() || deporte.value.isBlank())) ||
                         (tipo.value == "Juego de mesa" && juego.value.isBlank()) ||
@@ -123,37 +202,25 @@ fun Booking(
                         return@Button
                     }
 
-                    val formatoFecha = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
-                    val fechaActual = Calendar.getInstance().time
-                    val fechaSeleccionada = formatoFecha.parse(fecha.value)
-                    if (fechaSeleccionada.before(fechaActual)) {
-                        Toast.makeText(context, "No puedes seleccionar una fecha pasada", Toast.LENGTH_SHORT).show()
-                        return@Button
-                    }
-
-                    loading.value = true
-
-                    when (tipo.value) {
-                        "Cancha" -> reservarCancha(
-                            db, context, fecha.value, hora.value, deporte.value, cancha.value, limpiarFormulario, {
-                                loading.value = false
+                    // Validación de límite de reservas (2 por día)
+                    val hoy = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(Date())
+                    if (fecha.value == hoy) {
+                        db.collection("reservas")
+                            .whereEqualTo("uid", firebaseAuth.currentUser?.uid)
+                            .whereEqualTo("fecha", hoy)
+                            .get()
+                            .addOnSuccessListener { result ->
+                                if (result.size() >= 2) {
+                                    Toast.makeText(context, "Ya tienes 2 reservas para hoy", Toast.LENGTH_SHORT).show()
+                                } else {
+                                    continuarReserva()
+                                }
                             }
-                        )
-                        "Juego de mesa" -> reservarObjeto(
-                            db, context, fecha.value, hora.value, juego.value, "Juego de mesa", limpiarFormulario, {
-                                loading.value = false
+                            .addOnFailureListener {
+                                Toast.makeText(context, "Error al verificar reservas", Toast.LENGTH_SHORT).show()
                             }
-                        )
-                        "Instrumento" -> reservarObjeto(
-                            db, context, fecha.value, hora.value, instrumento.value, "Instrumento", limpiarFormulario, {
-                                loading.value = false
-                            }
-                        )
-                        "Balón" -> reservarObjeto(
-                            db, context, fecha.value, hora.value, balon.value, "Balón", limpiarFormulario, {
-                                loading.value = false
-                            }
-                        )
+                    } else {
+                        continuarReserva()
                     }
                 },
                 modifier = Modifier.width(190.dp).height(50.dp),
@@ -166,36 +233,53 @@ fun Booking(
                 }
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
         }
     }
 }
 
 @Composable
-fun DropdownField(label: String, options: List<String>, selected: String, onSelected: (String) -> Unit) {
+fun DropdownField(
+    label: String,
+    options: List<String>,
+    selected: String,
+    onSelected: (String) -> Unit
+) {
     var expanded by remember { mutableStateOf(false) }
-    Box(modifier = Modifier
-        .padding(vertical = 4.dp)
-        .width(380.dp)
-        .height(60.dp)) {
+
+    Box(
+        modifier = Modifier
+            .padding(vertical = 4.dp)
+            .width(380.dp)
+            .height(60.dp)
+            .clickable { expanded = true }
+    ) {
         TextField(
             value = selected,
             onValueChange = {},
             label = { Text(label) },
             readOnly = true,
             trailingIcon = {
-                IconButton(onClick = { expanded = true }) {
-                    Icon(Icons.Default.ArrowDropDown, contentDescription = null)
+                IconButton(onClick = { expanded = !expanded }) {
+                    Image(
+                        painterResource(if (expanded) R.drawable.arriba else R.drawable.abajo),
+                        contentDescription = null
+                    )
                 }
             },
             modifier = Modifier.fillMaxSize()
         )
-        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
             options.forEach { option ->
-                DropdownMenuItem(text = { Text(option) }, onClick = {
-                    onSelected(option)
-                    expanded = false
-                })
+                DropdownMenuItem(
+                    text = { Text(option) },
+                    onClick = {
+                        onSelected(option)
+                        expanded = false
+                    }
+                )
             }
         }
     }
@@ -209,28 +293,46 @@ fun FechaPickerField(fecha: String, onFechaSeleccionada: (String) -> Unit) {
     val month = calendario.get(Calendar.MONTH)
     val day = calendario.get(Calendar.DAY_OF_MONTH)
 
-    val datePickerDialog = remember {
-        DatePickerDialog(context, { _, y, m, d ->
-            val fechaFormateada = String.format("%02d/%02d/%04d", d, m + 1, y)
-            onFechaSeleccionada(fechaFormateada)
-        }, year, month, day)
-    }
-
-    TextField(
-        value = fecha,
-        onValueChange = {},
-        label = { Text("Fecha (dd/MM/yyyy)") },
-        readOnly = true,
-        trailingIcon = {
-            IconButton(onClick = { datePickerDialog.show() }) {
-                Image(
-                    painter = painterResource( R.drawable.calendar),
-                    contentDescription = null
-                )
+    val datePickerDialog = DatePickerDialog(
+        context,
+        { _, y, m, d ->
+            val tempCalendar = Calendar.getInstance().apply {
+                set(y, m, d)
+            }
+            if (tempCalendar.get(Calendar.DAY_OF_WEEK) == Calendar.SUNDAY) {
+                Toast.makeText(context, "No se pueden seleccionar domingos", Toast.LENGTH_SHORT).show()
+            } else {
+                val fechaFormateada = String.format("%02d/%02d/%04d", d, m + 1, y)
+                onFechaSeleccionada(fechaFormateada)
             }
         },
-        modifier = Modifier.width(380.dp).height(60.dp)
+        year,
+        month,
+        day
     )
+
+    Box(
+        modifier = Modifier
+            .width(380.dp)
+            .height(60.dp)
+            .clickable { datePickerDialog.show() }
+    ) {
+        TextField(
+            value = fecha,
+            onValueChange = {},
+            label = { Text("Fecha (dd/mm/yyyy)") },
+            readOnly = true,
+            trailingIcon = {
+                IconButton(onClick = { datePickerDialog.show() }) {
+                    Image(
+                        painter = painterResource(R.drawable.calendar),
+                        contentDescription = null
+                    )
+                }
+            },
+            modifier = Modifier.fillMaxSize()
+        )
+    }
 }
 
 fun reservarCancha(
@@ -262,7 +364,6 @@ fun reservarCancha(
                 "uid" to firebaseAuth.currentUser?.uid
             )
 
-            // Si el deporte requiere balón
             val balonRelacionado = when (deporte) {
                 "Fútbol" -> "Fútbol"
                 "Baloncesto" -> "Baloncesto"
@@ -278,7 +379,7 @@ fun reservarCancha(
                     hora,
                     balonRelacionado,
                     "Balón",
-                    limpiarFormulario = {}, // no limpiar doble
+                    limpiarFormulario = {},
                     onFinish = {}
                 )
             }
@@ -302,7 +403,6 @@ fun reservarCancha(
         onFinish()
     }
 }
-
 
 fun reservarObjeto(
     db: FirebaseFirestore,
@@ -367,4 +467,3 @@ fun reservarObjeto(
         onFinish()
     }
 }
-
