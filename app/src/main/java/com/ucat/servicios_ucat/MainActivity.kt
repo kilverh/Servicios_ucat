@@ -96,10 +96,6 @@ fun AppContent() {
                     onReservaExitosa = {
                         mostrarReserva = false
                         mostrarDashboard = true
-                    },
-                    onVolverAlMenu = {
-                        mostrarReserva = false
-                        mostrarDashboard = true
                     }
                 )
             }

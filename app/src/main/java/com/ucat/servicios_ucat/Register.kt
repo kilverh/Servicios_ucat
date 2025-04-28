@@ -112,7 +112,7 @@ fun RegistroScreen(
             if (correo.isNotBlank() && !esCorreoValido(correo)) {
                 Text(
                     text = "El correo institucional debe terminar en @ucatolica.edu.co",
-                    color = BlueButton,
+                    color = DarkGrey,
                     fontSize = 12.sp
                 )
             }
@@ -137,7 +137,7 @@ fun RegistroScreen(
             if (contrasena.isNotBlank() && !esContrasenaValida(contrasena)) {
                 Text(
                     text = "Debe tener al menos 1 mayúscula, 1 número y 1 símbolo.",
-                    color = BlueButton,
+                    color = DarkGrey,
                     fontSize = 12.sp
                 )
             }
@@ -162,7 +162,7 @@ fun RegistroScreen(
             if (!contrasenasCoinciden && repContrasena.isNotBlank()) {
                 Text(
                     text = "Las contraseñas no coinciden",
-                    color = BlueButton,
+                    color = DarkGrey,
                     fontSize = 12.sp
                 )
             }

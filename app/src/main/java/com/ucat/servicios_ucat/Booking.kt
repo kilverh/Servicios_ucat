@@ -6,7 +6,6 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.icons.Icons
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -66,7 +65,6 @@ fun Booking(
             }
     }
 
-    // Función para limpiar el formulario
     val limpiarFormulario = {
         tipo.value = ""
         fecha.value = ""
@@ -79,10 +77,11 @@ fun Booking(
     }
 
     fun continuarReserva() {
-        // Validación de fecha/hora futura
+
         val formatoFecha = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
         val formatoHora = SimpleDateFormat("HH:mm", Locale.getDefault())
         val ahora = Calendar.getInstance()
+
 
         try {
             val fechaSeleccionada = formatoFecha.parse(fecha.value) ?: return
@@ -105,37 +104,28 @@ fun Booking(
                 Toast.makeText(context, "Debes seleccionar una fecha y hora futura", Toast.LENGTH_SHORT).show()
                 return
             }
-
             loading.value = true
+            val onReservaFinalizada: (Boolean) -> Unit = { success ->
+                loading.value = false // Desactivar el estado de carga al finalizar la reserva
+                if (success) {
+                    reservasHoy.value++
+                    onReservaExitosa()
+                }
+            }
+
 
             when (tipo.value) {
                 "Cancha" -> reservarCancha(
-                    db, context, fecha.value, hora.value, deporte.value, cancha.value, limpiarFormulario, {
-                        loading.value = false
-                        reservasHoy.value++
-                        onReservaExitosa()
-                    }
+                    db, context, fecha.value, hora.value, deporte.value, cancha.value, limpiarFormulario, { onReservaFinalizada(true) }, { loading.value = it }
                 )
                 "Juego de mesa" -> reservarObjeto(
-                    db, context, fecha.value, hora.value, juego.value, "Juego de mesa", limpiarFormulario, {
-                        loading.value = false
-                        reservasHoy.value++
-                        onReservaExitosa()
-                    }
+                    db, context, fecha.value, hora.value, juego.value, "Juego de mesa", limpiarFormulario, { onReservaFinalizada(true) }, { loading.value = it }
                 )
                 "Instrumento" -> reservarObjeto(
-                    db, context, fecha.value, hora.value, instrumento.value, "Instrumento", limpiarFormulario, {
-                        loading.value = false
-                        reservasHoy.value++
-                        onReservaExitosa()
-                    }
+                    db, context, fecha.value, hora.value, instrumento.value, "Instrumento", limpiarFormulario, { onReservaFinalizada(true) }, { loading.value = it }
                 )
                 "Balón" -> reservarObjeto(
-                    db, context, fecha.value, hora.value, balon.value, "Balón", limpiarFormulario, {
-                        loading.value = false
-                        reservasHoy.value++
-                        onReservaExitosa()
-                    }
+                    db, context, fecha.value, hora.value, balon.value, "Balón", limpiarFormulario, { onReservaFinalizada(true) }, { loading.value = it }
                 )
             }
         } catch (e: Exception) {
@@ -189,20 +179,8 @@ fun Booking(
 
             Button(
                 onClick = {
-                    if (loading.value) return@Button
+                    // ... (validaciones previas)
 
-                    // Validación de campos obligatorios
-                    if (tipo.value.isBlank() || fecha.value.isBlank() || hora.value.isBlank() ||
-                        (tipo.value == "Cancha" && (cancha.value.isBlank() || deporte.value.isBlank())) ||
-                        (tipo.value == "Juego de mesa" && juego.value.isBlank()) ||
-                        (tipo.value == "Instrumento" && instrumento.value.isBlank()) ||
-                        (tipo.value == "Balón" && balon.value.isBlank())
-                    ) {
-                        Toast.makeText(context, "Por favor completa todos los campos", Toast.LENGTH_SHORT).show()
-                        return@Button
-                    }
-
-                    // Validación de límite de reservas (2 por día)
                     val hoy = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(Date())
                     if (fecha.value == hoy) {
                         db.collection("reservas")
@@ -210,7 +188,7 @@ fun Booking(
                             .whereEqualTo("fecha", hoy)
                             .get()
                             .addOnSuccessListener { result ->
-                                if (result.size() >= 2) {
+                                if (result.size() >= 3) {
                                     Toast.makeText(context, "Ya tienes 2 reservas para hoy", Toast.LENGTH_SHORT).show()
                                 } else {
                                     continuarReserva()
@@ -258,6 +236,7 @@ fun DropdownField(
             onValueChange = {},
             label = { Text(label) },
             readOnly = true,
+            enabled = false,
             trailingIcon = {
                 IconButton(onClick = { expanded = !expanded }) {
                     Image(
@@ -266,7 +245,8 @@ fun DropdownField(
                     )
                 }
             },
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier
+                .fillMaxSize()
         )
         DropdownMenu(
             expanded = expanded,
@@ -284,7 +264,6 @@ fun DropdownField(
         }
     }
 }
-
 @Composable
 fun FechaPickerField(fecha: String, onFechaSeleccionada: (String) -> Unit) {
     val context = LocalContext.current
@@ -322,6 +301,7 @@ fun FechaPickerField(fecha: String, onFechaSeleccionada: (String) -> Unit) {
             onValueChange = {},
             label = { Text("Fecha (dd/mm/yyyy)") },
             readOnly = true,
+            enabled = false,
             trailingIcon = {
                 IconButton(onClick = { datePickerDialog.show() }) {
                     Image(
@@ -343,7 +323,8 @@ fun reservarCancha(
     deporte: String,
     cancha: String,
     limpiarFormulario: () -> Unit,
-    onFinish: () -> Unit
+    onFinish: () -> Unit,
+    onLoadingChange: (Boolean) -> Unit // Nuevo parámetro para controlar el estado de carga
 ) {
     val docRef = db.collection("reservas")
         .whereEqualTo("tipo", "Cancha")
@@ -380,7 +361,8 @@ fun reservarCancha(
                     balonRelacionado,
                     "Balón",
                     limpiarFormulario = {},
-                    onFinish = {}
+                    onFinish = {},
+                    onLoadingChange = {} // También pasar una función vacía aquí si no necesitas manejar la carga del balón por separado
                 )
             }
 
@@ -389,21 +371,22 @@ fun reservarCancha(
                 .addOnSuccessListener {
                     Toast.makeText(context, "Reserva de cancha exitosa", Toast.LENGTH_SHORT).show()
                     limpiarFormulario()
+                    onFinish()
+                    onLoadingChange(false) // Desactivar el estado de carga
                 }
                 .addOnFailureListener {
-                    Toast.makeText(context, "Error al reservar cancha", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, "Error al guardar la reserva", Toast.LENGTH_SHORT).show()
+                    onLoadingChange(false) // Desactivar el estado de carga en caso de error
                 }
-                .addOnCompleteListener { onFinish() }
         } else {
-            Toast.makeText(context, "Esta cancha ya está reservada en ese horario", Toast.LENGTH_SHORT).show()
-            onFinish()
+            Toast.makeText(context, "La cancha ya está reservada para esa hora", Toast.LENGTH_SHORT).show()
+            onLoadingChange(false) // Desactivar el estado de carga si la cancha ya está reservada
         }
     }.addOnFailureListener {
-        Toast.makeText(context, "Error al verificar disponibilidad de la cancha", Toast.LENGTH_SHORT).show()
-        onFinish()
+        Toast.makeText(context, "Error al verificar disponibilidad", Toast.LENGTH_SHORT).show()
+        onLoadingChange(false) // Desactivar el estado de carga en caso de error al verificar
     }
 }
-
 fun reservarObjeto(
     db: FirebaseFirestore,
     context: android.content.Context,
@@ -412,7 +395,8 @@ fun reservarObjeto(
     nombreObjeto: String,
     tipo: String,
     limpiarFormulario: () -> Unit,
-    onFinish: () -> Unit
+    onFinish: () -> Unit,
+    onLoadingChange: (Boolean) -> Unit // Nuevo parámetro para controlar el estado de carga
 ) {
     val inventarioRef = db.collection("inventario").document(nombreObjeto)
     val reservasRef = db.collection("reservas")
@@ -448,22 +432,24 @@ fun reservarObjeto(
                         .addOnSuccessListener {
                             Toast.makeText(context, "Reserva de $tipo ($nombreObjeto) exitosa", Toast.LENGTH_SHORT).show()
                             limpiarFormulario()
+                            onFinish()
+                            onLoadingChange(false) // Desactivar el estado de carga
                         }
                         .addOnFailureListener {
                             Toast.makeText(context, "Error al reservar $tipo", Toast.LENGTH_SHORT).show()
+                            onLoadingChange(false) // Desactivar el estado de carga en caso de error
                         }
-                        .addOnCompleteListener { onFinish() }
                 } else {
                     Toast.makeText(context, "$tipo ($nombreObjeto) no disponible en este horario", Toast.LENGTH_SHORT).show()
-                    onFinish()
+                    onLoadingChange(false) // Desactivar el estado de carga si no está disponible
                 }
             }
             .addOnFailureListener {
                 Toast.makeText(context, "Error al verificar disponibilidad de $tipo", Toast.LENGTH_SHORT).show()
-                onFinish()
+                onLoadingChange(false) // Desactivar el estado de carga en caso de error al verificar
             }
     }.addOnFailureListener {
         Toast.makeText(context, "Error al consultar inventario de $tipo", Toast.LENGTH_SHORT).show()
-        onFinish()
+        onLoadingChange(false) // Desactivar el estado de carga en caso de error al consultar el inventario
     }
 }

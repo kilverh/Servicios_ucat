@@ -16,10 +16,10 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -29,6 +29,8 @@ import androidx.compose.ui.unit.sp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.ucat.servicios_ucat.ui.theme.BlueInstitutional
+import java.text.SimpleDateFormat
+import java.util.*
 
 data class Reserva(
     val id: String = "",
@@ -54,14 +56,26 @@ fun ManageBookings(onVolverAlMenu: () -> Unit) {
 
     var recursosDisponibles by remember { mutableStateOf(listOf<String>()) }
     val tipos = listOf("Juego de mesa", "Instrumento", "Balón", "Cancha")
-    val horasDisponibles = listOf("08:00", "09:00", "10:00", "11:00", "12:00", "2:00", "3:00", "4:00", "5:00", "6:00", "7:00")
+    val horasDisponibles = listOf(
+        "08:00",
+        "09:00",
+        "10:00",
+        "11:00",
+        "12:00",
+        "14:00",
+        "15:00",
+        "16:00",
+        "17:00",
+        "18:00",
+        "19:00"
+    )
 
     fun cargarReservas() {
         db.collection("reservas")
             .whereEqualTo("uid", userId)
             .get()
             .addOnSuccessListener { result ->
-                reservas = result.documents.map {
+                val fetchedReservas = result.documents.map {
                     val tipo = it.getString("tipo") ?: ""
                     val nombreRecurso = when (tipo) {
                         "Juego de mesa" -> it.getString("juego") ?: ""
@@ -78,6 +92,56 @@ fun ManageBookings(onVolverAlMenu: () -> Unit) {
                         hora = it.getString("hora") ?: ""
                     )
                 }
+
+                // Formateador para comparar fechas y horas
+                val dateFormatter = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
+                val now = Calendar.getInstance()
+
+                // Filtrar y eliminar reservas pasadas
+                val futurasReservas = fetchedReservas.filter { reserva ->
+                    try {
+                        val reservaDateTime =
+                            dateFormatter.parse("${reserva.fecha} ${reserva.hora}")
+                        reservaDateTime?.after(now.time)
+                            ?: true // Mantener si la fecha no se puede parsear
+                    } catch (e: Exception) {
+                        true // Mantener si hay error al parsear
+                    }
+                }.toMutableList()
+
+                // Eliminar las reservas pasadas directamente de Firestore
+                fetchedReservas.forEach { reserva ->
+                    try {
+                        val reservaDateTime =
+                            dateFormatter.parse("${reserva.fecha} ${reserva.hora}")
+                        if (reservaDateTime?.before(now.time) == true) {
+                            db.collection("reservas").document(reserva.id).delete()
+                                .addOnSuccessListener {
+                                    println("Reserva pasada eliminada: ${reserva.id}")
+                                }
+                                .addOnFailureListener { e ->
+                                    println("Error al eliminar reserva pasada ${reserva.id}: $e")
+                                }
+                        }
+                    } catch (e: Exception) {
+                        println("Error al parsear fecha para eliminación: ${reserva.id} - ${e.message}")
+                    }
+                }
+
+                // Ordenar las reservas futuras: primero la fecha actual, luego las futuras
+                val hoy = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(Date())
+                futurasReservas.sortWith(compareBy<Reserva> {
+                    try {
+                        dateFormatter.parse("${it.fecha} ${it.hora}")
+                    } catch (e: Exception) {
+                        Date(Long.MAX_VALUE) // Si no se puede parsear, poner al final
+                    }
+                }.thenBy { it.hora })
+
+                val reservasHoy = futurasReservas.filter { it.fecha == hoy }
+                val reservasFuturas = futurasReservas.filter { it.fecha != hoy }
+
+                reservas = reservasHoy + reservasFuturas
             }
     }
 
@@ -187,7 +251,42 @@ fun ManageBookings(onVolverAlMenu: () -> Unit) {
                 var expandedDeporte by remember { mutableStateOf(false) }
                 val deportes = listOf("Fútbol", "Baloncesto", "Voleibol", "Pin Pon")
 
-                var deporteEdit by remember { mutableStateOf("") }
+                var deporteEdit by remember {
+                    mutableStateOf(reservaEdit?.let { if (it.tipo == "Cancha") it.recurso else "" } ?: "")
+                }
+
+                // Nuevo estado para la lista de recursos filtrada por el tipo seleccionado
+                var recursosFiltrados by remember { mutableStateOf(listOf<String>()) }
+
+                // Efecto para actualizar la lista de recursos filtrada cuando cambia el tipoEdit
+                LaunchedEffect(tipoEdit) {
+                    when (tipoEdit) {
+                        "Juego de mesa" -> {
+                            db.collection("inventario").document("Juego de mesa").get()
+                                .addOnSuccessListener { doc ->
+                                    recursosFiltrados = (doc.get("juegos") as? List<String>) ?: emptyList()
+                                }
+                        }
+                        "Instrumento" -> {
+                            db.collection("inventario").document("Instrumento").get()
+                                .addOnSuccessListener { doc ->
+                                    recursosFiltrados = (doc.get("instrumentos") as? List<String>) ?: emptyList()
+                                }
+                        }
+                        "Balón" -> {
+                            db.collection("inventario").document("Balón").get()
+                                .addOnSuccessListener { doc ->
+                                    recursosFiltrados = (doc.get("balones") as? List<String>) ?: emptyList()
+                                }
+                        }
+                        "Cancha" -> {
+                            // No necesitamos cargar una lista general de canchas aquí,
+                            // el nombre de la cancha ya está en reservaEdit.recurso
+                            recursosFiltrados = emptyList()
+                        }
+                        else -> recursosFiltrados = emptyList()
+                    }
+                }
 
                 Column(
                     modifier = Modifier
@@ -228,9 +327,8 @@ fun ManageBookings(onVolverAlMenu: () -> Unit) {
                                     text = { Text(tipo) },
                                     onClick = {
                                         tipoEdit = tipo
-                                        recursoEdit = ""
-                                        deporteEdit = ""
-                                        cargarRecursosPorTipo(tipo)
+                                        recursoEdit = "" // Resetear el recurso al cambiar el tipo
+                                        deporteEdit = "" // Resetear el deporte al cambiar el tipo
                                         expandedTipo = false
                                     }
                                 )
@@ -280,7 +378,7 @@ fun ManageBookings(onVolverAlMenu: () -> Unit) {
                     Spacer(modifier = Modifier.height(8.dp))
 
                     // RECURSO
-                    if (recursosDisponibles.isNotEmpty()) {
+                    if (tipoEdit.isNotBlank()) {
                         ExposedDropdownMenuBox(
                             expanded = expandedRecurso,
                             onExpandedChange = { expandedRecurso = !expandedRecurso }) {
@@ -288,7 +386,17 @@ fun ManageBookings(onVolverAlMenu: () -> Unit) {
                                 value = recursoEdit,
                                 onValueChange = {},
                                 readOnly = true,
-                                label = { Text("Recurso") },
+                                label = {
+                                    Text(
+                                        when (tipoEdit) {
+                                            "Juego de mesa" -> "Juego"
+                                            "Instrumento" -> "Instrumento"
+                                            "Balón" -> "Balón"
+                                            "Cancha" -> "Cancha"
+                                            else -> "Recurso"
+                                        }
+                                    )
+                                },
                                 modifier = Modifier.menuAnchor().fillMaxWidth(),
                                 trailingIcon = {
                                     IconButton(onClick = { expandedRecurso = true }) {
@@ -300,7 +408,7 @@ fun ManageBookings(onVolverAlMenu: () -> Unit) {
                                 expanded = expandedRecurso,
                                 onDismissRequest = { expandedRecurso = false }
                             ) {
-                                recursosDisponibles.forEach { recurso ->
+                                recursosFiltrados.forEach { recurso ->
                                     DropdownMenuItem(
                                         text = { Text(recurso) },
                                         onClick = {
@@ -335,11 +443,16 @@ fun ManageBookings(onVolverAlMenu: () -> Unit) {
                                 expanded = expandedDeporte,
                                 onDismissRequest = { expandedDeporte = false }
                             ) {
-                                deportes.forEach { deporte ->
+                                val canchasFiltradas = when (deporteEdit) { // Usar deporteEdit para filtrar (aunque aquí no parece necesario)
+                                    "Pin Pon" -> listOf("Mesa Pin Pon 1", "Mesa Pin Pon 2")
+                                    else -> listOf("Claustro", "Carrera 13")
+                                }
+                                canchasFiltradas.forEach { cancha ->
                                     DropdownMenuItem(
-                                        text = { Text(deporte) },
+                                        text = { Text(cancha) },
                                         onClick = {
-                                            deporteEdit = deporte
+                                            deporteEdit = cancha // Aquí realmente deberías actualizar la cancha (recursoEdit)
+                                            recursoEdit = cancha
                                             expandedDeporte = false
                                         }
                                     )
@@ -378,36 +491,45 @@ fun ManageBookings(onVolverAlMenu: () -> Unit) {
                                     "Balón" -> data["balon"] = recursoEdit
                                     "Cancha" -> {
                                         data["cancha"] = recursoEdit
-                                        data["deporte"] = deporteEdit
+                                        data["deporte"] = deporteEdit // Aquí 'deporteEdit' debería ser el nombre de la cancha
                                     }
                                 }
 
-                                db.collection("reservas").document(reservaEdit!!.id)
-                                    .update(data as Map<String, Any>)
-                                    .addOnSuccessListener {
-                                        Toast.makeText(
-                                            context,
-                                            "Reserva actualizada",
-                                            Toast.LENGTH_SHORT
-                                        ).show()
-                                        reservaEdit = null
-                                        cargarReservas()
-                                    }
+                                reservaEdit?.let { reserva ->
+                                    db.collection("reservas").document(reserva.id)
+                                        .update(data as Map<String, Any>)
+                                        .addOnSuccessListener {
+                                            Toast.makeText(
+                                                context,
+                                                "Reserva actualizada",
+                                                Toast.LENGTH_SHORT
+                                            ).show()
+                                            reservaEdit = null
+                                            cargarReservas()
+                                        }
+                                        .addOnFailureListener { e ->
+                                            Toast.makeText(
+                                                context,
+                                                "Error al actualizar: ${e.message}",
+                                                Toast.LENGTH_SHORT
+                                            ).show()
+                                        }
+                                }
                             },
-                            modifier = Modifier
-                                .width(160.dp)
-                                .height(50.dp),
                             shape = RectangleShape
                         ) {
-                            Text("Actualizar")
+                            Text("Guardar cambios")
                         }
 
+                        Spacer(modifier = Modifier.height(8.dp))
+
                         Button(
-                            onClick = { reservaEdit = null },
-                            colors = ButtonDefaults.buttonColors(containerColor = Color.Gray),
-                            modifier = Modifier
-                                .width(160.dp)
-                                .height(50.dp),
+                            onClick = {
+                                reservaEdit = null
+                            },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color.Gray
+                            ),
                             shape = RectangleShape
                         ) {
                             Text("Cancelar")

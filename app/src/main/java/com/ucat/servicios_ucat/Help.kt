@@ -58,7 +58,8 @@ fun Help(
                 fontSize = 28.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.White,
-                modifier = Modifier.padding(bottom = 24.dp)
+                modifier = Modifier
+                    .padding(bottom = 24.dp)
             )
 
             Box(
