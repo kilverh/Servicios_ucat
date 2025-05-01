@@ -2,6 +2,7 @@
 
 package com.ucat.servicios_ucat
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -29,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ucat.servicios_ucat.ui.theme.BlueButton
 import com.ucat.servicios_ucat.ui.theme.BlueInstitutional
+import com.ucat.servicios_ucat.ui.theme.DarkGrey
 import kotlinx.coroutines.launch
 
 @Composable
@@ -72,6 +74,7 @@ fun PantallaConDrawer(
     }
 }
 @Composable
+//Manejo menu desplegable
 fun DrawerContent(
     onReservar: () -> Unit,
     onMisReservas: () -> Unit,

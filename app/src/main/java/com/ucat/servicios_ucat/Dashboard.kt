@@ -8,6 +8,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
@@ -22,7 +24,15 @@ fun DashboardContent(
     onIrAAyuda: () -> Unit,
     onIrACerrar: () -> Unit
 ) {
-    Box(modifier = Modifier.fillMaxSize().background(BlueInstitutional)){
+    Box(modifier = Modifier.fillMaxSize().background(
+        brush = Brush.linearGradient(
+            colors = listOf(
+                Color(0xFF2C80C1),
+                Color(0xFF4C9BE3),
+                Color(0xFF042137)
+            )
+        )
+    )){
         Image(
             painter = painterResource(id = R.drawable.logo),
             contentDescription = null,
@@ -39,6 +49,7 @@ fun DashboardContent(
             horizontalAlignment = Alignment.CenterHorizontally
 
         ) {
+            //Botones para ir a los diferentes modulos o salir de la cuenta
             Button(
                 onClick = onIrAReservar,
                 modifier = Modifier

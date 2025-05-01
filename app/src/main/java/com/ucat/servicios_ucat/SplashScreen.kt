@@ -20,8 +20,9 @@ fun SplashScreen(modifier: Modifier = Modifier) {
         modifier = Modifier.fillMaxSize()
     ) {
         val (titleText, logo, versionText) = createRefs()
-
+//Pantalla de bienvenida
         Text(
+            //Nombre de la aplicación
             text = "SERVICIOS UCAT",
             fontSize = 40.sp,
             fontWeight = FontWeight.Bold,
@@ -35,7 +36,7 @@ fun SplashScreen(modifier: Modifier = Modifier) {
                 centerHorizontallyTo(parent)
             }
         )
-
+        //Logo de la aplicación
         Image(
             painter = painterResource(id = R.drawable.logo),
             contentDescription = "Logo",
@@ -43,7 +44,7 @@ fun SplashScreen(modifier: Modifier = Modifier) {
                 centerTo(parent)
             }
         )
-
+        //Numero de versión
         Text(
             text = "VERSIÓN 1.0",
             fontSize = 14.sp,

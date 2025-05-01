@@ -11,6 +11,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.layout.ContentScale
@@ -37,22 +38,33 @@ fun Help(
     val problemOptions = listOf("Acceso", "Reservas", "Horarios", "Otro")
     var expanded by remember { mutableStateOf(false) }
 
-    Box(modifier = Modifier.fillMaxSize().background(BlueInstitutional)) {
+    Box(modifier = Modifier.fillMaxSize().background(
+        brush = Brush.linearGradient(
+            colors = listOf(
+                Color(0xFF2C80C1),
+                Color(0xFF4C9BE3),
+                Color(0xFF042137)
+            )
+        )
+    )) {
         Image(
             painter = painterResource(id = R.drawable.logo),
             contentDescription = null,
             modifier = Modifier
+                .offset(x = 0.dp, y = -40.dp)
                 .fillMaxSize()
                 .alpha(0.8f),
             contentScale = ContentScale.FillWidth
         )
         Column(
             modifier = Modifier
+                .offset(x = 0.dp, y = -30.dp)
                 .padding(36.dp)
                 .fillMaxSize(),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            //Formulario de ayuda
             Text(
                 text = "AYUDA",
                 fontSize = 28.sp,
@@ -62,10 +74,12 @@ fun Help(
                     .padding(bottom = 24.dp)
             )
 
+            Spacer(modifier = Modifier.height(50.dp))
+
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(bottom = 16.dp)
+                    .padding(bottom = 26.dp)
             ) {
                 ExposedDropdownMenuBox(
                     expanded = expanded,
@@ -109,6 +123,8 @@ fun Help(
                     .height(160.dp)
                     .padding(bottom = 24.dp)
             )
+
+            Spacer(modifier = Modifier.height(40.dp))
 
             Button(
                 onClick = {

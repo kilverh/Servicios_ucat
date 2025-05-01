@@ -7,7 +7,6 @@ import androidx.compose.material3.Button
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.google.firebase.auth.FirebaseAuth
 import androidx.compose.material3.Text
@@ -20,12 +19,12 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import com.ucat.servicios_ucat.ui.theme.BlueButton
+import com.ucat.servicios_ucat.ui.theme.White
 
 @Composable
 fun Recover(
     onVolverAlLogin: () -> Unit
 ) {
-    val context = LocalContext.current
     var email by remember { mutableStateOf("") }
     var mensaje by remember { mutableStateOf("") }
 
@@ -34,9 +33,10 @@ fun Recover(
             painter = painterResource(id = R.drawable.logo),
             contentDescription = null,
             modifier = Modifier
-                .offset(x = 0.dp, y = -50.dp)
-                .fillMaxSize()
-                .alpha(0.8f),
+                .offset(x = 30.dp, y = 15.dp)
+                .height(750.dp)
+                .width(350.dp)
+                .alpha(0.6f),
             contentScale = ContentScale.FillWidth,
         )
         Column(
@@ -46,12 +46,14 @@ fun Recover(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text("RECUPERAR CONTRASEÑA", fontSize = 25.sp, fontWeight = FontWeight.Bold)
+
+            Text("RECUPERAR CONTRASEÑA", fontSize = 25.sp, fontWeight = FontWeight.Bold, color = White)
             Spacer(modifier = Modifier.height(76.dp))
 
             TextField(
                 value = email,
                 onValueChange = { email = it },
+                //correo enlazado para recuperar contraseña
                 label = { Text("Correo institucional") },
                 modifier = Modifier.fillMaxWidth()
             )

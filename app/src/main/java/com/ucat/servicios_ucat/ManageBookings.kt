@@ -19,6 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -28,7 +29,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import com.ucat.servicios_ucat.ui.theme.BlueInstitutional
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -37,7 +37,8 @@ data class Reserva(
     val tipo: String = "",
     val recurso: String = "",
     val fecha: String = "",
-    val hora: String = ""
+    val hora: String = "",
+    val deporte: String? = null
 )
 
 @Composable
@@ -71,25 +72,28 @@ fun ManageBookings(onVolverAlMenu: () -> Unit) {
     )
 
     fun cargarReservas() {
+        //Conexion con la tabla en la base de datos de las reservas
         db.collection("reservas")
             .whereEqualTo("uid", userId)
             .get()
             .addOnSuccessListener { result ->
-                val fetchedReservas = result.documents.map {
-                    val tipo = it.getString("tipo") ?: ""
+                println("Consulta de reservas exitosa, número de documentos: ${result.size()}") // Agregado para debugging
+                val fetchedReservas = result.documents.map { document ->
+                    println("Documento encontrado: ${document.id} - ${document.data}") // Agregado para debugging
+                    val tipo = document.getString("tipo") ?: ""
                     val nombreRecurso = when (tipo) {
-                        "Juego de mesa" -> it.getString("juego") ?: ""
-                        "Instrumento" -> it.getString("instrumento") ?: ""
-                        "Balón" -> it.getString("balon") ?: ""
-                        "Cancha" -> it.getString("cancha") ?: ""
+                        "Juego de mesa" -> document.getString("juego") ?: ""
+                        "Instrumento" -> document.getString("instrumento") ?: ""
+                        "Balón" -> document.getString("balon") ?: ""
+                        "Cancha" -> document.getString("cancha") ?: ""
                         else -> ""
                     }
                     Reserva(
-                        id = it.id,
+                        id = document.id,
                         tipo = tipo,
                         recurso = nombreRecurso,
-                        fecha = it.getString("fecha") ?: "",
-                        hora = it.getString("hora") ?: ""
+                        fecha = document.getString("fecha") ?: "",
+                        hora = document.getString("hora") ?: ""
                     )
                 }
 
@@ -105,11 +109,9 @@ fun ManageBookings(onVolverAlMenu: () -> Unit) {
                         reservaDateTime?.after(now.time)
                             ?: true // Mantener si la fecha no se puede parsear
                     } catch (e: Exception) {
-                        true // Mantener si hay error al parsear
+                        true
                     }
                 }.toMutableList()
-
-                // Eliminar las reservas pasadas directamente de Firestore
                 fetchedReservas.forEach { reserva ->
                     try {
                         val reservaDateTime =
@@ -142,9 +144,12 @@ fun ManageBookings(onVolverAlMenu: () -> Unit) {
                 val reservasFuturas = futurasReservas.filter { it.fecha != hoy }
 
                 reservas = reservasHoy + reservasFuturas
+                println("Lista de reservas cargada: $reservas") // Agregado para debugging
+            }
+            .addOnFailureListener { e ->
+                println("Error al cargar las reservas: ${e.message}") // Agregado para debugging
             }
     }
-
     fun cargarRecursosPorTipo(tipo: String) {
         db.collection("inventario").document(tipo).get()
             .addOnSuccessListener { doc ->
@@ -165,8 +170,16 @@ fun ManageBookings(onVolverAlMenu: () -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(BlueInstitutional)
-    ) {
+            .background(
+                brush = Brush.linearGradient(
+                    colors = listOf(
+                        Color(0xFF2C80C1),
+                        Color(0xFF4C9BE3),
+                        Color(0xFF042137)
+                    )
+                )
+    ))
+    {
         Image(
             painter = painterResource(id = R.drawable.logo),
             contentDescription = null,
@@ -216,6 +229,7 @@ fun ManageBookings(onVolverAlMenu: () -> Unit) {
                                         .padding(top = 8.dp),
                                     horizontalArrangement = Arrangement.End
                                 ) {
+                                    //Boton de reservas y eliminar
                                     IconButton(onClick = {
                                         reservaEdit = reserva
                                         fechaEdit = reserva.fecha
@@ -251,40 +265,33 @@ fun ManageBookings(onVolverAlMenu: () -> Unit) {
                 var expandedDeporte by remember { mutableStateOf(false) }
                 val deportes = listOf("Fútbol", "Baloncesto", "Voleibol", "Pin Pon")
 
-                var deporteEdit by remember {
-                    mutableStateOf(reservaEdit?.let { if (it.tipo == "Cancha") it.recurso else "" } ?: "")
+                // Estados separados para el recurso y el deporte en la edición
+                var recursoEditado by remember { mutableStateOf(reservaEdit?.recurso ?: "") }
+                var deporteEditado by remember { mutableStateOf(reservaEdit?.let { if (it.tipo == "Cancha") it.deporte ?: "" else "" } ?: "") }
+
+                // Estado para la lista de recursos filtrada por el tipo seleccionado
+                var recursosDisponiblesEdit by remember { mutableStateOf(listOf<String>()) }
+                var canchasDisponiblesEdit by remember { mutableStateOf(listOf<String>()) }
+                val recursosMostrar = when (tipoEdit) {
+                    "Cancha" -> canchasDisponiblesEdit
+                    else -> recursosDisponiblesEdit
                 }
 
-                // Nuevo estado para la lista de recursos filtrada por el tipo seleccionado
-                var recursosFiltrados by remember { mutableStateOf(listOf<String>()) }
+                // Efecto para inicializar los campos de edición cuando se selecciona una reserva
+                LaunchedEffect(reservaEdit) {
+                    reservaEdit?.let {
+                        tipoEdit = it.tipo
+                        fechaEdit = it.fecha
+                        horaEdit = it.hora
+                        recursoEditado = it.recurso
+                        deporteEditado = it.deporte ?: ""
 
-                // Efecto para actualizar la lista de recursos filtrada cuando cambia el tipoEdit
-                LaunchedEffect(tipoEdit) {
-                    when (tipoEdit) {
-                        "Juego de mesa" -> {
-                            db.collection("inventario").document("Juego de mesa").get()
-                                .addOnSuccessListener { doc ->
-                                    recursosFiltrados = (doc.get("juegos") as? List<String>) ?: emptyList()
-                                }
+                        // Este llamado ya es suficiente, evita que se dispare el otro LaunchedEffect
+                        cargarRecursosDisponiblesParaEdicion(it.tipo) { recursos, canchas ->
+                            println("Recursos disponibles para edición: $recursosDisponiblesEdit")
+                            recursosDisponiblesEdit = recursos
+                            canchasDisponiblesEdit = canchas
                         }
-                        "Instrumento" -> {
-                            db.collection("inventario").document("Instrumento").get()
-                                .addOnSuccessListener { doc ->
-                                    recursosFiltrados = (doc.get("instrumentos") as? List<String>) ?: emptyList()
-                                }
-                        }
-                        "Balón" -> {
-                            db.collection("inventario").document("Balón").get()
-                                .addOnSuccessListener { doc ->
-                                    recursosFiltrados = (doc.get("balones") as? List<String>) ?: emptyList()
-                                }
-                        }
-                        "Cancha" -> {
-                            // No necesitamos cargar una lista general de canchas aquí,
-                            // el nombre de la cancha ya está en reservaEdit.recurso
-                            recursosFiltrados = emptyList()
-                        }
-                        else -> recursosFiltrados = emptyList()
                     }
                 }
 
@@ -327,8 +334,6 @@ fun ManageBookings(onVolverAlMenu: () -> Unit) {
                                     text = { Text(tipo) },
                                     onClick = {
                                         tipoEdit = tipo
-                                        recursoEdit = "" // Resetear el recurso al cambiar el tipo
-                                        deporteEdit = "" // Resetear el deporte al cambiar el tipo
                                         expandedTipo = false
                                     }
                                 )
@@ -377,46 +382,47 @@ fun ManageBookings(onVolverAlMenu: () -> Unit) {
 
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    // RECURSO
-                    if (tipoEdit.isNotBlank()) {
-                        ExposedDropdownMenuBox(
-                            expanded = expandedRecurso,
-                            onExpandedChange = { expandedRecurso = !expandedRecurso }) {
-                            TextField(
-                                value = recursoEdit,
-                                onValueChange = {},
-                                readOnly = true,
-                                label = {
-                                    Text(
-                                        when (tipoEdit) {
-                                            "Juego de mesa" -> "Juego"
-                                            "Instrumento" -> "Instrumento"
-                                            "Balón" -> "Balón"
-                                            "Cancha" -> "Cancha"
-                                            else -> "Recurso"
-                                        }
-                                    )
-                                },
-                                modifier = Modifier.menuAnchor().fillMaxWidth(),
-                                trailingIcon = {
-                                    IconButton(onClick = { expandedRecurso = true }) {
-                                        Icon(Icons.Default.ArrowDropDown, contentDescription = null)
+                    // RECURSO (Juego, Instrumento, Balón o Cancha)
+                    println("Recursos a mostrar: $recursosMostrar")
+
+                    ExposedDropdownMenuBox(
+                        expanded = expandedRecurso,
+                        onExpandedChange = { expandedRecurso = !expandedRecurso }) {
+                        TextField(
+                            value = recursoEditado,
+                            onValueChange = {},
+                            readOnly = true,
+                            label = {
+                                Text(
+                                    when (tipoEdit) {
+                                        "Juego de mesa" -> "Juego"
+                                        "Instrumento" -> "Instrumento"
+                                        "Balón" -> "Balón"
+                                        "Cancha" -> "Cancha"
+                                        else -> "Recurso"
                                     }
+                                )
+                            },
+                            modifier = Modifier.menuAnchor().fillMaxWidth(),
+                            trailingIcon = {
+                                IconButton(onClick = { expandedRecurso = true }) {
+                                    Icon(Icons.Default.ArrowDropDown, contentDescription = null)
                                 }
-                            )
-                            ExposedDropdownMenu(
-                                expanded = expandedRecurso,
-                                onDismissRequest = { expandedRecurso = false }
-                            ) {
-                                recursosFiltrados.forEach { recurso ->
-                                    DropdownMenuItem(
-                                        text = { Text(recurso) },
-                                        onClick = {
-                                            recursoEdit = recurso
-                                            expandedRecurso = false
-                                        }
-                                    )
-                                }
+                            }
+                        )
+                        ExposedDropdownMenu(
+                            expanded = expandedRecurso,
+                            onDismissRequest = { expandedRecurso = false }
+                        ) {
+                            val recursosMostrar = if (tipoEdit == "Cancha") canchasDisponiblesEdit else recursosDisponiblesEdit
+                            recursosMostrar.forEach { recurso ->
+                                DropdownMenuItem(
+                                    text = { Text(recurso) },
+                                    onClick = {
+                                        recursoEditado = recurso
+                                        expandedRecurso = false
+                                    }
+                                )
                             }
                         }
                     }
@@ -428,7 +434,7 @@ fun ManageBookings(onVolverAlMenu: () -> Unit) {
                             expanded = expandedDeporte,
                             onExpandedChange = { expandedDeporte = !expandedDeporte }) {
                             TextField(
-                                value = deporteEdit,
+                                value = deporteEditado,
                                 onValueChange = {},
                                 readOnly = true,
                                 label = { Text("Deporte") },
@@ -443,16 +449,12 @@ fun ManageBookings(onVolverAlMenu: () -> Unit) {
                                 expanded = expandedDeporte,
                                 onDismissRequest = { expandedDeporte = false }
                             ) {
-                                val canchasFiltradas = when (deporteEdit) { // Usar deporteEdit para filtrar (aunque aquí no parece necesario)
-                                    "Pin Pon" -> listOf("Mesa Pin Pon 1", "Mesa Pin Pon 2")
-                                    else -> listOf("Claustro", "Carrera 13")
-                                }
-                                canchasFiltradas.forEach { cancha ->
+                                println("Contenido de deportes: $deportes") // Debug
+                                deportes.forEach { deporte ->
                                     DropdownMenuItem(
-                                        text = { Text(cancha) },
+                                        text = { Text(deporte) },
                                         onClick = {
-                                            deporteEdit = cancha // Aquí realmente deberías actualizar la cancha (recursoEdit)
-                                            recursoEdit = cancha
+                                            deporteEditado = deporte
                                             expandedDeporte = false
                                         }
                                     )
@@ -470,7 +472,7 @@ fun ManageBookings(onVolverAlMenu: () -> Unit) {
                     ) {
                         Button(
                             onClick = {
-                                if (fechaEdit.isBlank() || horaEdit.isBlank() || recursoEdit.isBlank() || (tipoEdit == "Cancha" && deporteEdit.isBlank())) {
+                                if (fechaEdit.isBlank() || horaEdit.isBlank() || recursoEditado.isBlank() || (tipoEdit == "Cancha" && deporteEditado.isBlank())) {
                                     Toast.makeText(
                                         context,
                                         "Por favor completa todos los campos",
@@ -486,13 +488,14 @@ fun ManageBookings(onVolverAlMenu: () -> Unit) {
                                 )
 
                                 when (tipoEdit) {
-                                    "Juego de mesa" -> data["juego"] = recursoEdit
-                                    "Instrumento" -> data["instrumento"] = recursoEdit
-                                    "Balón" -> data["balon"] = recursoEdit
+                                    "Juego de mesa" -> data["juego"] = recursoEditado
+                                    "Instrumento" -> data["instrumento"] = recursoEditado
+                                    "Balón" -> data["balon"] = recursoEditado
                                     "Cancha" -> {
-                                        data["cancha"] = recursoEdit
-                                        data["deporte"] = deporteEdit // Aquí 'deporteEdit' debería ser el nombre de la cancha
+                                        data["cancha"] = recursoEditado
+                                        data["deporte"] = deporteEditado
                                     }
+                                    else -> data["recurso"] = recursoEditado
                                 }
 
                                 reservaEdit?.let { reserva ->
@@ -539,4 +542,33 @@ fun ManageBookings(onVolverAlMenu: () -> Unit) {
             }
         }
     }
+}
+
+// Función para cargar los recursos disponibles para la edición
+fun cargarRecursosDisponiblesParaEdicion(tipo: String, onRecursosCargados: (List<String>, List<String>) -> Unit) {
+    val db = FirebaseFirestore.getInstance()
+    var recursos = listOf<String>()
+    var canchas = listOf<String>()
+
+    println("Intentando cargar recursos para el tipo: $tipo") // Debugging
+
+    db.collection("inventario").get()
+        .addOnSuccessListener { result ->
+            println("Consulta de inventario exitosa, número de documentos: ${result.size()}") // Debugging
+            for (document in result) {
+                println("Documento de inventario encontrado: ${document.id} - ${document.data}") // Debugging
+                when (document.id) {
+                    "Juego de mesa" -> if (tipo == "Juego de mesa") recursos = (document.get("juegos") as? List<String>) ?: emptyList()
+                    "Instrumento" -> if (tipo == "Instrumento") recursos = (document.get("instrumentos") as? List<String>) ?: emptyList()
+                    "Balón" -> if (tipo == "Balón") recursos = (document.get("balones") as? List<String>) ?: emptyList()
+                    "Cancha" -> if (tipo == "Cancha") canchas = (document.get("canchas") as? List<String>) ?: emptyList()
+                }
+            }
+            println("Recursos cargados para $tipo: Juegos/Instrumentos/Balones = $recursos, Canchas = $canchas") // Debugging
+            onRecursosCargados(recursos, canchas)
+        }
+        .addOnFailureListener { e ->
+            println("Error al cargar inventario para edición: ${e.message}")
+            onRecursosCargados(emptyList(), emptyList())
+        }
 }

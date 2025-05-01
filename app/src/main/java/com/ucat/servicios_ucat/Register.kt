@@ -1,10 +1,13 @@
 package com.ucat.servicios_ucat
 
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -25,14 +28,23 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.ucat.servicios_ucat.ui.theme.BlueButton
 import com.ucat.servicios_ucat.ui.theme.DarkGrey
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.text.input.ImeAction
+import com.ucat.servicios_ucat.ui.theme.White
+
 
 @Composable
 fun RegistroScreen(
     modifier: Modifier = Modifier,
-    onIrALogin: () -> Unit,
-    onError: (String) -> Unit
+    onIrALogin: () -> Unit
 ) {
     val context = LocalContext.current
+    val focusNombre = remember { FocusRequester() }
+    val focusCodigo = remember { FocusRequester() }
+    val focusCorreo = remember { FocusRequester() }
+    val focusContrasena = remember { FocusRequester() }
+    val focusRepContrasena = remember { FocusRequester() }
 
     var nombre by remember { mutableStateOf("") }
     var codigo by remember { mutableStateOf("") }
@@ -54,10 +66,10 @@ fun RegistroScreen(
     }
 
     fun esCorreoValido(correo: String): Boolean {
-
         val emailRegex = "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.(com|co)$"
         return correo.matches(emailRegex.toRegex()) && correo.endsWith("@ucatolica.edu.co")
     }
+
     Box(modifier = Modifier.fillMaxSize()) {
         Image(
             painter = painterResource(id = R.drawable.logo),
@@ -77,7 +89,8 @@ fun RegistroScreen(
         ) {
             Spacer(modifier = Modifier.height(50.dp))
 
-            Text("REGÍSTRATE", fontSize = 30.sp, fontWeight = FontWeight.Bold)
+            //Inicio formulario de registro, conectado con firebase
+            Text("REGÍSTRATE", fontSize = 30.sp, fontWeight = FontWeight.Bold, color = White)
 
             Spacer(modifier = Modifier.height(30.dp))
 
@@ -87,7 +100,12 @@ fun RegistroScreen(
                 label = { Text("Nombre") },
                 modifier = Modifier
                     .width(380.dp)
-                    .height(60.dp),
+                    .height(60.dp)
+                    .focusRequester(focusNombre),
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                keyboardActions = KeyboardActions(
+                    onNext = { focusCodigo.requestFocus() }
+                )
             )
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -97,7 +115,12 @@ fun RegistroScreen(
                 label = { Text("Codigó estudiantil") },
                 modifier = Modifier
                     .width(380.dp)
-                    .height(60.dp),
+                    .height(60.dp)
+                    .focusRequester(focusCodigo),
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                keyboardActions = KeyboardActions(
+                    onNext = { focusCorreo.requestFocus() }
+                )
             )
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -107,12 +130,17 @@ fun RegistroScreen(
                 label = { Text("Correo Institucional") },
                 modifier = Modifier
                     .width(380.dp)
-                    .height(60.dp),
+                    .height(60.dp)
+                    .focusRequester(focusCorreo),
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                keyboardActions = KeyboardActions(
+                    onNext = { focusContrasena.requestFocus() }
+                )
             )
             if (correo.isNotBlank() && !esCorreoValido(correo)) {
                 Text(
                     text = "El correo institucional debe terminar en @ucatolica.edu.co",
-                    color = DarkGrey,
+                    color = Color.White,
                     fontSize = 12.sp
                 )
             }
@@ -124,7 +152,12 @@ fun RegistroScreen(
                 label = { Text("Contraseña") },
                 modifier = Modifier
                     .width(380.dp)
-                    .height(60.dp),
+                    .height(60.dp)
+                    .focusRequester(focusContrasena),
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                keyboardActions = KeyboardActions(
+                    onNext = { focusRepContrasena.requestFocus() }
+                ),
                 trailingIcon = {
                     Image(
                         painter = painterResource(if (lockContrasena.value) R.drawable.eye_show else R.drawable.hidden_eye),
@@ -137,7 +170,7 @@ fun RegistroScreen(
             if (contrasena.isNotBlank() && !esContrasenaValida(contrasena)) {
                 Text(
                     text = "Debe tener al menos 1 mayúscula, 1 número y 1 símbolo.",
-                    color = DarkGrey,
+                    color = Color.White,
                     fontSize = 12.sp
                 )
             }
@@ -149,7 +182,9 @@ fun RegistroScreen(
                 label = { Text("Repite tu Contraseña") },
                 modifier = Modifier
                     .width(380.dp)
-                    .height(60.dp),
+                    .height(60.dp)
+                    .focusRequester(focusRepContrasena),
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
                 trailingIcon = {
                     Image(
                         painter = painterResource(if (lockRepContrasena.value) R.drawable.eye_show else R.drawable.hidden_eye),
@@ -162,7 +197,7 @@ fun RegistroScreen(
             if (!contrasenasCoinciden && repContrasena.isNotBlank()) {
                 Text(
                     text = "Las contraseñas no coinciden",
-                    color = DarkGrey,
+                    color = Color.White,
                     fontSize = 12.sp
                 )
             }
@@ -187,7 +222,7 @@ fun RegistroScreen(
                         correo = correo,
                         contrasena = contrasena,
                         onSuccess = {
-                            Toast.makeText(context, "Cuenta creada exitosamente", Toast.LENGTH_LONG).show()
+                            Toast.makeText(context, "Cuenta creada exitosamente. Por favor, revisa tu correo para verificar tu cuenta.", Toast.LENGTH_LONG).show()
                             nombre = ""
                             codigo = ""
                             correo = ""
@@ -195,6 +230,7 @@ fun RegistroScreen(
                             repContrasena = ""
                             aceptaTerminos = false
                             isLoading = false
+                            onIrALogin()
                         },
                         onError = { error ->
                             Toast.makeText(context, error, Toast.LENGTH_LONG).show()
@@ -248,33 +284,51 @@ fun RegistroScreen(
 }
 
 fun RegistrarUsuario(
-        modifier: Modifier = Modifier,
-        nombre: String,
-        codigo: String,
-        correo: String,
-        contrasena: String,
-        onSuccess: () -> Unit,
-        onError: (String) -> Unit
-    ) {
-        val auth = FirebaseAuth.getInstance()
-        val db = FirebaseFirestore.getInstance()
+    nombre: String,
+    codigo: String,
+    correo: String,
+    contrasena: String,
+    onSuccess: () -> Unit,
+    onError: (String) -> Unit
+) {
+    val auth = FirebaseAuth.getInstance()
+    val db = FirebaseFirestore.getInstance()
 
-        auth.createUserWithEmailAndPassword(correo, contrasena)
-            .addOnCompleteListener { task ->
-                if (task.isSuccessful) {
-                    val uid = auth.currentUser?.uid ?: return@addOnCompleteListener
-                    val user = hashMapOf(
-                        "nombre" to nombre,
-                        "codigo" to codigo,
-                        "correo" to correo
-                    )
-                    db.collection("usuarios").document(uid).set(user)
-                        .addOnSuccessListener { onSuccess() }
-                        .addOnFailureListener { e -> onError(e.message ?: "Error al guardar datos") }
-                } else {
-                    onError(task.exception?.message ?: "Error al crear usuario")
-                }
+    auth.createUserWithEmailAndPassword(correo, contrasena)
+        .addOnCompleteListener { task ->
+            Log.d("Registro", "Resultado de createUserWithEmailAndPassword: ${task.isSuccessful}")
+            if (task.isSuccessful) {
+                val user = auth.currentUser
+                user?.sendEmailVerification()
+                    ?.addOnCompleteListener { verificationTask ->
+                        Log.d("Registro", "Resultado de sendEmailVerification: ${verificationTask.isSuccessful}")
+                        if (verificationTask.isSuccessful) {
+                            val uid = user.uid
+                            val userData = hashMapOf(
+                                "nombre" to nombre,
+                                "codigo" to codigo,
+                                "correo" to correo,
+                                "isEmailVerified" to false
+                            )
+                            db.collection("usuarios").document(uid).set(userData)
+                                .addOnSuccessListener {
+                                    Log.d("Registro", "Datos guardados en Firestore exitosamente")
+                                    onSuccess()
+                                }
+                                .addOnFailureListener { e ->
+                                    Log.e("Registro", "Error al guardar datos del usuario: ${e.message}")
+                                    onError("Error al guardar datos del usuario: ${e.message}")
+                                }
+                        } else {
+                            user.delete()
+                                .addOnCompleteListener { Log.d("Registro", "Usuario eliminado tras fallo en verificación") }
+                            Log.e("Registro", "Error al enviar el correo de verificación: ${verificationTask.exception?.message}")
+                            onError("Error al enviar el correo de verificación: ${verificationTask.exception?.message}")
+                        }
+                    }
+            } else {
+                Log.e("Registro", "Error al crear la cuenta: ${task.exception?.message}")
+                onError("Error al crear la cuenta: ${task.exception?.message}")
             }
+        }
 }
-
-

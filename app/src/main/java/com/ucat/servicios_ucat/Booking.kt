@@ -11,6 +11,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.layout.ContentScale
@@ -22,7 +23,6 @@ import androidx.compose.ui.unit.sp
 import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import com.ucat.servicios_ucat.ui.theme.BlueInstitutional
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -31,6 +31,7 @@ fun Booking(
     modifier: Modifier = Modifier,
     onReservaExitosa: () -> Unit = {}
 ) {
+    //Nanejo de variables.
     val context = LocalContext.current
     val db = FirebaseFirestore.getInstance()
     val firebaseAuth = FirebaseAuth.getInstance()
@@ -99,7 +100,17 @@ fun Booking(
                 Toast.makeText(context, "No se pueden hacer reservas los domingos", Toast.LENGTH_SHORT).show()
                 return
             }
-
+            if (calendarioSeleccionado.get(Calendar.DAY_OF_WEEK) == Calendar.SATURDAY) {
+                val horaSeleccionadaInt = calendarioSeleccionado.get(Calendar.HOUR_OF_DAY)
+                if (horaSeleccionadaInt < 9 || horaSeleccionadaInt >= 15) {
+                    Toast.makeText(
+                        context,
+                        "Los sábados solo se puede reservar de 9:00 a 14:00",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                    return
+                }
+            }
             if (calendarioSeleccionado.before(ahora)) {
                 Toast.makeText(context, "Debes seleccionar una fecha y hora futura", Toast.LENGTH_SHORT).show()
                 return
@@ -133,7 +144,17 @@ fun Booking(
         }
     }
 
-    Box(modifier = modifier.fillMaxSize().background(BlueInstitutional)) {
+    Box(modifier = modifier
+        .fillMaxSize()
+        .background(
+        brush = Brush.linearGradient(
+            colors = listOf(
+                Color(0xFF2C80C1),
+                Color(0xFF4C9BE3),
+                Color(0xFF042137)
+            )
+        )
+    )) {
         Image(
             painter = painterResource(id = R.drawable.logo),
             contentDescription = null,
