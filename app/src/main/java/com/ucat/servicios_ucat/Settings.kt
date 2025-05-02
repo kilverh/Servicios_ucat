@@ -83,6 +83,7 @@ fun AccountSettingsScreen(
     Box(modifier = Modifier.fillMaxSize().background(
         brush = Brush.linearGradient(
             colors = listOf(
+                Color(0xFF042137),
                 Color(0xFF2C80C1),
                 Color(0xFF4C9BE3),
                 Color(0xFF042137)
@@ -265,26 +266,6 @@ fun AccountSettingsScreen(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Button(
-                        onClick = onVolverAlDashboard,
-                        modifier = Modifier
-                            .width(120.dp)
-                            .height(50.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = DarkGrey),
-                        shape = RectangleShape
-                    ) {
-                        Text("Volver", fontSize = 18.sp, color = White)
-                    }
-                    Button(
-                        onClick = onCerrarSesion,
-                        modifier = Modifier
-                            .width(200.dp)
-                            .height(50.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color.Gray),
-                        shape = RectangleShape
-                    ) {
-                        Text("Cerrar Sesión", fontSize = 18.sp, color = White)
-                    }
                 }
             }
 

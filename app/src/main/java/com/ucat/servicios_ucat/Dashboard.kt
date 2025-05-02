@@ -13,21 +13,24 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.ucat.servicios_ucat.ui.theme.*
+import androidx.compose.ui.unit.sp
 
 @Composable
 fun DashboardContent(
+    nombreUsuario: String?,
     modifier: Modifier = Modifier,
     onIrAReservar: () -> Unit,
     onIrAGestionarReservas: () -> Unit,
     onIrAAyuda: () -> Unit,
     onIrACerrar: () -> Unit,
-    onIrAAjustesCuenta: () -> Unit // Nuevo lambda
-) {
+    onIrAAjustesCuenta: () -> Unit
+){
     Box(modifier = Modifier.fillMaxSize().background(
         brush = Brush.linearGradient(
             colors = listOf(
+                Color(0xFF042137),
                 Color(0xFF2C80C1),
                 Color(0xFF4C9BE3),
                 Color(0xFF042137)
@@ -50,7 +53,16 @@ fun DashboardContent(
             horizontalAlignment = Alignment.CenterHorizontally
 
         ) {
-            //Botones para ir a los diferentes modulos o salir de la cuenta
+
+            Text(
+                text = "BIENVENID@${if (!nombreUsuario.isNullOrEmpty()) " ${nombreUsuario.uppercase()}" else ""}",
+                fontSize = 28.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.White,
+            )
+
+            Spacer(modifier = Modifier.height(64.dp))
+
             Button(
                 onClick = onIrAReservar,
                 modifier = Modifier
@@ -74,7 +86,7 @@ fun DashboardContent(
 
             Spacer(modifier = Modifier.height(24.dp))
             Button(
-                onClick = onIrAAjustesCuenta, // Nuevo botón
+                onClick = onIrAAjustesCuenta,
                 modifier = Modifier
                     .width(380.dp)
                     .height(60.dp),

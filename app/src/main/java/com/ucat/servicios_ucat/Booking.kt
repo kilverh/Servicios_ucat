@@ -149,6 +149,7 @@ fun Booking(
         .background(
         brush = Brush.linearGradient(
             colors = listOf(
+                Color(0xFF042137),
                 Color(0xFF2C80C1),
                 Color(0xFF4C9BE3),
                 Color(0xFF042137)
@@ -200,8 +201,6 @@ fun Booking(
 
             Button(
                 onClick = {
-                    // ... (validaciones previas)
-
                     val hoy = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(Date())
                     if (fecha.value == hoy) {
                         db.collection("reservas")

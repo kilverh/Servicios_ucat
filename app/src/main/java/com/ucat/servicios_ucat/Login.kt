@@ -168,18 +168,18 @@ fun Login(
                 }
             }
 
-            Spacer(modifier = Modifier.height(34.dp))
-            Text(
-                text = "¿Olvidaste tu contraseña?",
-                color = Color.White,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.clickable { onRecuperar() }
-            )
+            Spacer(modifier = Modifier.height(24.dp))
             Text(
                 text = "¿No tienes una cuenta? Regístrate aquí",
                 color = Color.White,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.clickable { onIrARegistro() }
+            )
+            Text(
+                text = "¿Olvidaste tu contraseña?",
+                color = Color.White,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.clickable { onRecuperar() }
             )
         }
     }

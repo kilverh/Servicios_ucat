@@ -13,6 +13,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import com.google.firebase.FirebaseApp
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 import com.ucat.servicios_ucat.ui.theme.Servicios_ucatTheme
 import kotlinx.coroutines.delay
 
@@ -38,7 +40,24 @@ fun AppContent() {
     var mostrarReserva by remember { mutableStateOf(false) }
     var mostrarGestionReservas by remember { mutableStateOf(false) }
     var mostrarAyuda by remember { mutableStateOf(false) }
-    var mostrarAjustesCuenta by remember { mutableStateOf(false) } // Nuevo estado
+    var mostrarAjustesCuenta by remember { mutableStateOf(false) }
+    val auth = FirebaseAuth.getInstance()
+    val firestore = FirebaseFirestore.getInstance()
+    var nombreUsuario by remember { mutableStateOf<String?>(null) }
+
+    LaunchedEffect(Unit) {
+        val uid = auth.currentUser?.uid
+        if (uid != null) {
+            firestore.collection("usuarios").document(uid)
+                .get()
+                .addOnSuccessListener { document ->
+                    nombreUsuario = document.getString("nombre")
+                }
+                .addOnFailureListener {
+                    nombreUsuario = "Invitado"
+                }
+        }
+    }
 
     LaunchedEffect(Unit) {
         delay(3000)
@@ -52,6 +71,7 @@ fun AppContent() {
             .background(
                 brush = Brush.linearGradient(
                     colors = listOf(
+                        Color(0xFF042137),
                         Color(0xFF2C80C1),
                         Color(0xFF4C9BE3),
                         Color(0xFF042137)
@@ -212,6 +232,7 @@ fun AppContent() {
                 },
                 contenidoPrincipal = {
                     DashboardContent(
+                        nombreUsuario = nombreUsuario,
                         onIrAReservar = {
                             mostrarDashboard = false
                             mostrarReserva = true

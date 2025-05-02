@@ -41,6 +41,7 @@ fun Help(
     Box(modifier = Modifier.fillMaxSize().background(
         brush = Brush.linearGradient(
             colors = listOf(
+                Color(0xFF042137),
                 Color(0xFF2C80C1),
                 Color(0xFF4C9BE3),
                 Color(0xFF042137)
