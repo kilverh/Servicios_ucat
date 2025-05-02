@@ -40,7 +40,6 @@ data class Reserva(
     val hora: String = "",
     val deporte: String? = null
 )
-
 @Composable
 fun ManageBookings(onVolverAlMenu: () -> Unit) {
     val context = LocalContext.current
@@ -70,7 +69,6 @@ fun ManageBookings(onVolverAlMenu: () -> Unit) {
         "18:00",
         "19:00"
     )
-
     fun cargarReservas() {
         //Conexion con la tabla en la base de datos de las reservas
         db.collection("reservas")
@@ -287,7 +285,7 @@ fun ManageBookings(onVolverAlMenu: () -> Unit) {
                         deporteEditado = it.deporte ?: ""
 
                         // Este llamado ya es suficiente, evita que se dispare el otro LaunchedEffect
-                        cargarRecursosDisponiblesParaEdicion(it.tipo) { recursos, canchas ->
+                        cargarRecursos(it.tipo) { recursos, canchas ->
                             println("Recursos disponibles para edición: $recursosDisponiblesEdit")
                             recursosDisponiblesEdit = recursos
                             canchasDisponiblesEdit = canchas
@@ -310,6 +308,7 @@ fun ManageBookings(onVolverAlMenu: () -> Unit) {
                     Spacer(modifier = Modifier.height(16.dp))
 
                     // TIPO
+                    // Cuando el tipo cambia
                     ExposedDropdownMenuBox(
                         expanded = expandedTipo,
                         onExpandedChange = { expandedTipo = !expandedTipo }) {
@@ -334,7 +333,13 @@ fun ManageBookings(onVolverAlMenu: () -> Unit) {
                                     text = { Text(tipo) },
                                     onClick = {
                                         tipoEdit = tipo
+                                        recursoEditado = "" // Reiniciar el recurso editado
                                         expandedTipo = false
+                                        // Actualizar los recursos disponibles para el nuevo tipo
+                                        cargarRecursos(tipo) { recursos, canchas ->
+                                            recursosDisponiblesEdit = recursos
+                                            canchasDisponiblesEdit = canchas
+                                        }
                                     }
                                 )
                             }
@@ -384,7 +389,13 @@ fun ManageBookings(onVolverAlMenu: () -> Unit) {
 
                     // RECURSO (Juego, Instrumento, Balón o Cancha)
                     println("Recursos a mostrar: $recursosMostrar")
+// Actualiza la lista de recursos a mostrar según el tipo
+                    val recursosMostrar = when (tipoEdit) {
+                        "Cancha" -> canchasDisponiblesEdit
+                        else -> recursosDisponiblesEdit
+                    }
 
+// Cuando el recurso cambia (en el ExposedDropdownMenu para los recursos)
                     ExposedDropdownMenuBox(
                         expanded = expandedRecurso,
                         onExpandedChange = { expandedRecurso = !expandedRecurso }) {
@@ -414,7 +425,6 @@ fun ManageBookings(onVolverAlMenu: () -> Unit) {
                             expanded = expandedRecurso,
                             onDismissRequest = { expandedRecurso = false }
                         ) {
-                            val recursosMostrar = if (tipoEdit == "Cancha") canchasDisponiblesEdit else recursosDisponiblesEdit
                             recursosMostrar.forEach { recurso ->
                                 DropdownMenuItem(
                                     text = { Text(recurso) },
@@ -426,8 +436,6 @@ fun ManageBookings(onVolverAlMenu: () -> Unit) {
                             }
                         }
                     }
-
-                    // DEPORTE (solo si tipo es Cancha)
                     if (tipoEdit == "Cancha") {
                         Spacer(modifier = Modifier.height(8.dp))
                         ExposedDropdownMenuBox(
@@ -463,7 +471,6 @@ fun ManageBookings(onVolverAlMenu: () -> Unit) {
                         }
                     }
 
-                    // BOTONES
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -472,6 +479,7 @@ fun ManageBookings(onVolverAlMenu: () -> Unit) {
                     ) {
                         Button(
                             onClick = {
+                                // Validación de campos vacíos
                                 if (fechaEdit.isBlank() || horaEdit.isBlank() || recursoEditado.isBlank() || (tipoEdit == "Cancha" && deporteEditado.isBlank())) {
                                     Toast.makeText(
                                         context,
@@ -544,19 +552,14 @@ fun ManageBookings(onVolverAlMenu: () -> Unit) {
     }
 }
 
-// Función para cargar los recursos disponibles para la edición
-fun cargarRecursosDisponiblesParaEdicion(tipo: String, onRecursosCargados: (List<String>, List<String>) -> Unit) {
+fun cargarRecursos(tipo: String, onRecursosCargados: (List<String>, List<String>) -> Unit) {
     val db = FirebaseFirestore.getInstance()
     var recursos = listOf<String>()
     var canchas = listOf<String>()
 
-    println("Intentando cargar recursos para el tipo: $tipo") // Debugging
-
     db.collection("inventario").get()
         .addOnSuccessListener { result ->
-            println("Consulta de inventario exitosa, número de documentos: ${result.size()}") // Debugging
             for (document in result) {
-                println("Documento de inventario encontrado: ${document.id} - ${document.data}") // Debugging
                 when (document.id) {
                     "Juego de mesa" -> if (tipo == "Juego de mesa") recursos = (document.get("juegos") as? List<String>) ?: emptyList()
                     "Instrumento" -> if (tipo == "Instrumento") recursos = (document.get("instrumentos") as? List<String>) ?: emptyList()
@@ -564,11 +567,10 @@ fun cargarRecursosDisponiblesParaEdicion(tipo: String, onRecursosCargados: (List
                     "Cancha" -> if (tipo == "Cancha") canchas = (document.get("canchas") as? List<String>) ?: emptyList()
                 }
             }
-            println("Recursos cargados para $tipo: Juegos/Instrumentos/Balones = $recursos, Canchas = $canchas") // Debugging
             onRecursosCargados(recursos, canchas)
         }
         .addOnFailureListener { e ->
-            println("Error al cargar inventario para edición: ${e.message}")
             onRecursosCargados(emptyList(), emptyList())
         }
 }
+

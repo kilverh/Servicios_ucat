@@ -38,14 +38,14 @@ fun AppContent() {
     var mostrarReserva by remember { mutableStateOf(false) }
     var mostrarGestionReservas by remember { mutableStateOf(false) }
     var mostrarAyuda by remember { mutableStateOf(false) }
-
+    var mostrarAjustesCuenta by remember { mutableStateOf(false) } // Nuevo estado
 
     LaunchedEffect(Unit) {
         delay(3000)
         mostrarSplash = false
         mostrarLogin = true
     }
-    //MAIN
+
     Scaffold(
         modifier = Modifier
             .fillMaxSize()
@@ -100,6 +100,10 @@ fun AppContent() {
                         onCerrarSesion = {
                             mostrarReserva = false
                             mostrarLogin = true
+                        },
+                        onAjustesCuenta = { // Nuevo lambda
+                            mostrarReserva = false
+                            mostrarAjustesCuenta = true
                         }
                     )
                 },
@@ -130,6 +134,10 @@ fun AppContent() {
                         onCerrarSesion = {
                             mostrarGestionReservas = false
                             mostrarLogin = true
+                        },
+                        onAjustesCuenta = { // Nuevo lambda
+                            mostrarGestionReservas = false
+                            mostrarAjustesCuenta = true
                         }
                     )
                 },
@@ -142,6 +150,7 @@ fun AppContent() {
                     )
                 }
             )
+
             mostrarAyuda -> PantallaConDrawer(
                 drawerContent = {
                     DrawerContent(
@@ -153,15 +162,14 @@ fun AppContent() {
                             mostrarAyuda = false
                             mostrarGestionReservas = true
                         },
-                        onAyuda = {
-                            mostrarReserva = false
-                            mostrarGestionReservas = false
-                            mostrarDashboard = false
-                            mostrarAyuda = true
-                        },
+                        onAyuda = {},
                         onCerrarSesion = {
                             mostrarAyuda = false
                             mostrarLogin = true
+                        },
+                        onAjustesCuenta = { // Nuevo lambda
+                            mostrarAyuda = false
+                            mostrarAjustesCuenta = true
                         }
                     )
                 },
@@ -174,6 +182,7 @@ fun AppContent() {
                     )
                 }
             )
+
             mostrarDashboard -> PantallaConDrawer(
                 drawerContent = {
                     DrawerContent(
@@ -194,6 +203,10 @@ fun AppContent() {
                         onCerrarSesion = {
                             mostrarDashboard = false
                             mostrarLogin = true
+                        },
+                        onAjustesCuenta = { // Nuevo lambda
+                            mostrarDashboard = false
+                            mostrarAjustesCuenta = true
                         }
                     )
                 },
@@ -215,6 +228,34 @@ fun AppContent() {
                         },
                         onIrACerrar = {
                             mostrarDashboard = false
+                            mostrarLogin = true
+                        },
+                        onIrAAjustesCuenta = {
+                            mostrarDashboard = false
+                            mostrarAjustesCuenta = true
+                        }
+                    )
+                }
+            )
+
+            mostrarAjustesCuenta -> PantallaConDrawer( // Envuelve AccountSettingsScreen
+                drawerContent = {
+                    DrawerContent(
+                        onReservar = { mostrarAjustesCuenta = false; mostrarReserva = true },
+                        onMisReservas = { mostrarAjustesCuenta = false; mostrarGestionReservas = true },
+                        onAyuda = { mostrarAjustesCuenta = false; mostrarAyuda = true },
+                        onCerrarSesion = { mostrarAjustesCuenta = false; mostrarLogin = true },
+                        onAjustesCuenta = {} // Ya estamos aquí, no hacemos nada al clickear
+                    )
+                },
+                contenidoPrincipal = {
+                    AccountSettingsScreen(
+                        onVolverAlDashboard = {
+                            mostrarAjustesCuenta = false
+                            mostrarDashboard = true
+                        },
+                        onCerrarSesion = {
+                            mostrarAjustesCuenta = false
                             mostrarLogin = true
                         }
                     )

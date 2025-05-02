@@ -22,7 +22,8 @@ fun DashboardContent(
     onIrAReservar: () -> Unit,
     onIrAGestionarReservas: () -> Unit,
     onIrAAyuda: () -> Unit,
-    onIrACerrar: () -> Unit
+    onIrACerrar: () -> Unit,
+    onIrAAjustesCuenta: () -> Unit // Nuevo lambda
 ) {
     Box(modifier = Modifier.fillMaxSize().background(
         brush = Brush.linearGradient(
@@ -71,6 +72,16 @@ fun DashboardContent(
                 Text("MIS RESERVAS")
             }
 
+            Spacer(modifier = Modifier.height(24.dp))
+            Button(
+                onClick = onIrAAjustesCuenta, // Nuevo botón
+                modifier = Modifier
+                    .width(380.dp)
+                    .height(60.dp),
+                shape = RectangleShape
+            ) {
+                Text("AJUSTES DE CUENTA")
+            }
             Spacer(modifier = Modifier.height(24.dp))
             Button(
                 onClick = onIrAAyuda,
