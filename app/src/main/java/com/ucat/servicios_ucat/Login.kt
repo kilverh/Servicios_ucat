@@ -1,5 +1,6 @@
 package com.ucat.servicios_ucat
 
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
@@ -22,6 +23,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 import com.ucat.servicios_ucat.ui.theme.BlueButton
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -31,7 +33,8 @@ import com.ucat.servicios_ucat.ui.theme.White
 @Composable
 fun Login(
     modifier: Modifier = Modifier,
-    onLoginExitoso: () -> Unit,
+    onLoginExitosoEstudiante: () -> Unit, // Cambiamos el nombre para mayor claridad
+    onLoginExitosoAdmin: () -> Unit,    // Nuevo callback para el admin
     onIrARegistro: () -> Unit,
     onRecuperar: () -> Unit,
     onError: (String) -> Unit
@@ -40,6 +43,7 @@ fun Login(
     val focusContrasena = remember { FocusRequester() }
 
     val auth = FirebaseAuth.getInstance()
+    val firestore = FirebaseFirestore.getInstance()
     val context = LocalContext.current
 
     var correo by remember { mutableStateOf("") }
@@ -47,18 +51,40 @@ fun Login(
     val mostrarContrasena = remember { mutableStateOf(false) }
     var isLoading by remember { mutableStateOf(false) }
 
-    fun VerificarCorreo(onExito: () -> Unit) {
+    fun obtenerRolUsuario(userId: String, onRolObtenido: (String?) -> Unit) {
+        firestore.collection("usuarios").document(userId)
+            .get()
+            .addOnSuccessListener { document ->
+                val rol = document.getString("rol")
+                onRolObtenido(rol)
+            }
+            .addOnFailureListener { e ->
+                Log.e("Login", "Error al obtener el rol del usuario: ${e.message}")
+                onRolObtenido(null)
+                Toast.makeText(context, "Error al verificar el rol.", Toast.LENGTH_SHORT).show()
+            }
+    }
+
+    fun VerificarCorreo(onExito: (String?) -> Unit) { // Modificamos para pasar el rol
         val user = auth.currentUser
         if (user?.isEmailVerified == true) {
-            onExito()
+            user.uid?.let { uid ->
+                obtenerRolUsuario(uid) { rol ->
+                    onExito(rol)
+                }
+            } ?: run {
+                isLoading = false
+                Toast.makeText(context, "UID de usuario no encontrado.", Toast.LENGTH_SHORT).show()
+                auth.signOut()
+            }
         } else {
-            isLoading = false // Asegúrate de resetear el estado de carga aquí
+            isLoading = false
             Toast.makeText(
                 context,
                 "Por favor, verifica tu correo electrónico antes de iniciar sesión.",
                 Toast.LENGTH_LONG
             ).show()
-            auth.signOut() // Cierra la sesión del usuario no verificado
+            auth.signOut()
         }
     }
 
@@ -132,9 +158,16 @@ fun Login(
                     auth.signInWithEmailAndPassword(correo, contrasena)
                         .addOnCompleteListener { task ->
                             if (task.isSuccessful) {
-                                VerificarCorreo {
+                                VerificarCorreo { rol ->
                                     isLoading = false
-                                    onLoginExitoso()
+                                    when (rol) {
+                                        "Estudiante" -> onLoginExitosoEstudiante()
+                                        "Administrador" -> onLoginExitosoAdmin()
+                                        else -> {
+                                            Toast.makeText(context, "Rol no reconocido.", Toast.LENGTH_SHORT).show()
+                                            auth.signOut()
+                                        }
+                                    }
                                 }
                             } else {
                                 isLoading = false

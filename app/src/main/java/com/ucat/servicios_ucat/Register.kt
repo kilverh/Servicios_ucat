@@ -1,5 +1,6 @@
 package com.ucat.servicios_ucat
 
+import android.annotation.SuppressLint
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.Image
@@ -33,7 +34,8 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.text.input.ImeAction
 import com.ucat.servicios_ucat.ui.theme.White
 
-
+@SuppressLint("UnrememberedMutableState")
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RegistroScreen(
     modifier: Modifier = Modifier,
@@ -41,13 +43,15 @@ fun RegistroScreen(
 ) {
     val context = LocalContext.current
     val focusNombre = remember { FocusRequester() }
-    val focusCodigo = remember { FocusRequester() }
+    val focusCodigoEstudiante = remember { FocusRequester() }
+    val focusCodigoAdmin = remember { FocusRequester() }
     val focusCorreo = remember { FocusRequester() }
     val focusContrasena = remember { FocusRequester() }
     val focusRepContrasena = remember { FocusRequester() }
 
     var nombre by remember { mutableStateOf("") }
-    var codigo by remember { mutableStateOf("") }
+    var codigoEstudiante by remember { mutableStateOf("") }
+    var codigoAdmin by remember { mutableStateOf("") }
     var correo by remember { mutableStateOf("") }
     var contrasena by remember { mutableStateOf("") }
     var repContrasena by remember { mutableStateOf("") }
@@ -56,9 +60,19 @@ fun RegistroScreen(
     var aceptaTerminos by remember { mutableStateOf(false) }
     var isLoading by remember { mutableStateOf(false) }
 
+    // Nuevo estado para el rol
+    var rolSeleccionado by remember { mutableStateOf("Estudiante") } // Valor por defecto
+    val roles = listOf("Estudiante", "Administrador")
+    var expandedRol by remember { mutableStateOf(false) }
+
     val contrasenasCoinciden = contrasena == repContrasena && contrasena.isNotBlank()
-    val camposLlenos = nombre.isNotBlank() && codigo.isNotBlank() && correo.isNotBlank() &&
+    val camposLlenosEstudiante = nombre.isNotBlank() && codigoEstudiante.isNotBlank() && correo.isNotBlank() &&
             contrasena.isNotBlank() && repContrasena.isNotBlank()
+    val camposLlenosAdmin = nombre.isNotBlank() && codigoAdmin.isNotBlank() && correo.isNotBlank() &&
+            contrasena.isNotBlank() && repContrasena.isNotBlank()
+    val camposLlenos by derivedStateOf {
+        if (rolSeleccionado == "Estudiante") camposLlenosEstudiante else camposLlenosAdmin
+    }
 
     fun esContrasenaValida(contrasena: String): Boolean {
         val regex = "^(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#\$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>\\/?]).+$"
@@ -104,25 +118,45 @@ fun RegistroScreen(
                     .focusRequester(focusNombre),
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
                 keyboardActions = KeyboardActions(
-                    onNext = { focusCodigo.requestFocus() }
+                    onNext = {
+                        if (rolSeleccionado == "Estudiante") focusCodigoEstudiante.requestFocus()
+                        else focusCodigoAdmin.requestFocus()
+                    }
                 )
             )
             Spacer(modifier = Modifier.height(16.dp))
 
-            TextField(
-                value = codigo,
-                onValueChange = { codigo = it },
-                label = { Text("Codigó estudiantil") },
-                modifier = Modifier
-                    .width(380.dp)
-                    .height(60.dp)
-                    .focusRequester(focusCodigo),
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
-                keyboardActions = KeyboardActions(
-                    onNext = { focusCorreo.requestFocus() }
+            if (rolSeleccionado == "Estudiante") {
+                TextField(
+                    value = codigoEstudiante,
+                    onValueChange = { codigoEstudiante = it },
+                    label = { Text("Código estudiantil") },
+                    modifier = Modifier
+                        .width(380.dp)
+                        .height(60.dp)
+                        .focusRequester(focusCodigoEstudiante),
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                    keyboardActions = KeyboardActions(
+                        onNext = { focusCorreo.requestFocus() }
+                    )
                 )
-            )
-            Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(16.dp))
+            } else {
+                TextField(
+                    value = codigoAdmin,
+                    onValueChange = { codigoAdmin = it },
+                    label = { Text("Código de administrador") },
+                    modifier = Modifier
+                        .width(380.dp)
+                        .height(60.dp)
+                        .focusRequester(focusCodigoAdmin),
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                    keyboardActions = KeyboardActions(
+                        onNext = { focusCorreo.requestFocus() }
+                    )
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+            }
 
             TextField(
                 value = correo,
@@ -203,6 +237,39 @@ fun RegistroScreen(
             }
             Spacer(modifier = Modifier.height(16.dp))
 
+            // Dropdown para seleccionar el rol
+            ExposedDropdownMenuBox(
+                expanded = expandedRol,
+                onExpandedChange = { expandedRol = !expandedRol },
+            ) {
+                TextField(
+                    readOnly = true,
+                    value = rolSeleccionado,
+                    onValueChange = {},
+                    label = { Text("Rol") },
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedRol) },
+                    colors = ExposedDropdownMenuDefaults.textFieldColors(),
+                    modifier = Modifier.menuAnchor()
+                        .width(380.dp)
+                        .height(60.dp)
+                )
+                ExposedDropdownMenu(
+                    expanded = expandedRol,
+                    onDismissRequest = { expandedRol = false }
+                ) {
+                    roles.forEach { rol ->
+                        DropdownMenuItem(
+                            text = { Text(text = rol) },
+                            onClick = {
+                                rolSeleccionado = rol
+                                expandedRol = false
+                            }
+                        )
+                    }
+                }
+            }
+            Spacer(modifier = Modifier.height(16.dp))
+
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Checkbox(
                     checked = aceptaTerminos,
@@ -216,15 +283,18 @@ fun RegistroScreen(
             Button(
                 onClick = {
                     isLoading = true
+                    val codigo = if (rolSeleccionado == "Estudiante") codigoEstudiante else codigoAdmin
                     RegistrarUsuario(
                         nombre = nombre,
                         codigo = codigo,
                         correo = correo,
                         contrasena = contrasena,
+                        rol = rolSeleccionado, // Pasar el rol seleccionado
                         onSuccess = {
                             Toast.makeText(context, "Cuenta creada exitosamente. Por favor, revisa tu correo para verificar tu cuenta.", Toast.LENGTH_LONG).show()
                             nombre = ""
-                            codigo = ""
+                            codigoEstudiante = ""
+                            codigoAdmin = ""
                             correo = ""
                             contrasena = ""
                             repContrasena = ""
@@ -288,6 +358,7 @@ fun RegistrarUsuario(
     codigo: String,
     correo: String,
     contrasena: String,
+    rol: String, // Nuevo parámetro para el rol
     onSuccess: () -> Unit,
     onError: (String) -> Unit
 ) {
@@ -307,6 +378,7 @@ fun RegistrarUsuario(
                             val userData = hashMapOf(
                                 "nombre" to nombre,
                                 "codigo" to codigo,
+                                "rol" to rol, // Guardar el rol
                                 "correo" to correo,
                                 "isEmailVerified" to false
                             )

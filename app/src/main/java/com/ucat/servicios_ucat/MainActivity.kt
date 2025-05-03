@@ -35,7 +35,8 @@ class MainActivity : ComponentActivity() {
 fun AppContent() {
     var mostrarSplash by remember { mutableStateOf(true) }
     var mostrarLogin by remember { mutableStateOf(false) }
-    var mostrarDashboard by remember { mutableStateOf(false) }
+    var mostrarDashboardEstudiante by remember { mutableStateOf(false) }
+    var mostrarDashboardAdministrador by remember { mutableStateOf(false) }
     var mostrarRecuperar by remember { mutableStateOf(false) }
     var mostrarReserva by remember { mutableStateOf(false) }
     var mostrarGestionReservas by remember { mutableStateOf(false) }
@@ -84,9 +85,13 @@ fun AppContent() {
             mostrarSplash -> SplashScreen()
 
             mostrarLogin -> Login(
-                onLoginExitoso = {
+                onLoginExitosoEstudiante = {
                     mostrarLogin = false
-                    mostrarDashboard = true
+                    mostrarDashboardEstudiante = true
+                },
+                onLoginExitosoAdmin = {
+                    mostrarLogin = false
+                    mostrarDashboardAdministrador = true
                 },
                 onIrARegistro = { mostrarLogin = false },
                 onError = {},
@@ -114,7 +119,8 @@ fun AppContent() {
                         onAyuda = {
                             mostrarReserva = false
                             mostrarGestionReservas = false
-                            mostrarDashboard = false
+                            mostrarDashboardEstudiante = false
+                            mostrarDashboardAdministrador = false
                             mostrarAyuda = true
                         },
                         onCerrarSesion = {
@@ -131,7 +137,7 @@ fun AppContent() {
                     Booking(
                         onReservaExitosa = {
                             mostrarReserva = false
-                            mostrarDashboard = true
+                            mostrarDashboardEstudiante = true // O donde corresponda
                         }
                     )
                 }
@@ -148,7 +154,8 @@ fun AppContent() {
                         onAyuda = {
                             mostrarReserva = false
                             mostrarGestionReservas = false
-                            mostrarDashboard = false
+                            mostrarDashboardEstudiante = false
+                            mostrarDashboardAdministrador = false
                             mostrarAyuda = true
                         },
                         onCerrarSesion = {
@@ -165,7 +172,7 @@ fun AppContent() {
                     ManageBookings(
                         onVolverAlMenu = {
                             mostrarGestionReservas = false
-                            mostrarDashboard = true
+                            mostrarDashboardEstudiante = true // O donde corresponda
                         }
                     )
                 }
@@ -197,65 +204,45 @@ fun AppContent() {
                     Help(
                         onReservaExitosa = {
                             mostrarAyuda = false
-                            mostrarDashboard = true
+                            mostrarDashboardEstudiante = true // O donde corresponda
                         }
                     )
                 }
             )
 
-            mostrarDashboard -> PantallaConDrawer(
+            mostrarDashboardEstudiante -> PantallaConDrawer(
                 drawerContent = {
                     DrawerContent(
-                        onReservar = {
-                            mostrarDashboard = false
-                            mostrarReserva = true
-                        },
-                        onMisReservas = {
-                            mostrarDashboard = false
-                            mostrarGestionReservas = true
-                        },
-                        onAyuda = {
-                            mostrarReserva = false
-                            mostrarGestionReservas = false
-                            mostrarDashboard = false
-                            mostrarAyuda = true
-                        },
-                        onCerrarSesion = {
-                            mostrarDashboard = false
-                            mostrarLogin = true
-                        },
-                        onAjustesCuenta = { // Nuevo lambda
-                            mostrarDashboard = false
-                            mostrarAjustesCuenta = true
-                        }
+                        onReservar = { mostrarDashboardEstudiante = false; mostrarReserva = true },
+                        onMisReservas = { mostrarDashboardEstudiante = false; mostrarGestionReservas = true },
+                        onAyuda = { mostrarDashboardEstudiante = false; mostrarAyuda = true },
+                        onCerrarSesion = { mostrarDashboardEstudiante = false; mostrarLogin = true },
+                        onAjustesCuenta = { mostrarDashboardEstudiante = false; mostrarAjustesCuenta = true }
                     )
                 },
                 contenidoPrincipal = {
                     DashboardContent(
                         nombreUsuario = nombreUsuario,
-                        onIrAReservar = {
-                            mostrarDashboard = false
-                            mostrarReserva = true
-                        },
-                        onIrAGestionarReservas = {
-                            mostrarDashboard = false
-                            mostrarGestionReservas = true
-                        },
-                        onIrAAyuda = {
-                            mostrarReserva = false
-                            mostrarGestionReservas = false
-                            mostrarDashboard = false
-                            mostrarAyuda = true
-                        },
+                        onIrAReservar = { mostrarDashboardEstudiante = false; mostrarReserva = true },
+                        onIrAGestionarReservas = { mostrarDashboardEstudiante = false; mostrarGestionReservas = true },
+                        onIrAAyuda = { mostrarDashboardEstudiante = false; mostrarAyuda = true },
                         onIrACerrar = {
-                            mostrarDashboard = false
+                            auth.signOut()
+                            mostrarDashboardEstudiante = false
                             mostrarLogin = true
                         },
-                        onIrAAjustesCuenta = {
-                            mostrarDashboard = false
-                            mostrarAjustesCuenta = true
-                        }
+                        onIrAAjustesCuenta = { mostrarDashboardEstudiante = false; mostrarAjustesCuenta = true }
                     )
+                }
+            )
+
+            mostrarDashboardAdministrador -> AdminDashboard(
+                onVerReservas = { /* TODO: Navegar a la pantalla de ver reservas de admin */ },
+                onVerEstadisticas = { /* TODO: Navegar a la pantalla de estadísticas de admin */ },
+                onCerrarSesionAdmin = {
+                    auth.signOut()
+                    mostrarDashboardAdministrador = false
+                    mostrarLogin = true
                 }
             )
 
@@ -273,7 +260,7 @@ fun AppContent() {
                     AccountSettingsScreen(
                         onVolverAlDashboard = {
                             mostrarAjustesCuenta = false
-                            mostrarDashboard = true
+                            mostrarDashboardEstudiante = true // O donde corresponda
                         },
                         onCerrarSesion = {
                             mostrarAjustesCuenta = false

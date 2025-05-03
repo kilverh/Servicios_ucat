@@ -621,7 +621,6 @@ fun ManageBookings(onVolverAlMenu: () -> Unit) {
 }
 fun cargarRecursos(tipo: String, onRecursosCargados: (List<String>, List<String>) -> Unit) {
     val db = FirebaseFirestore.getInstance()
-    Log.d("ManageBookings", "Cargando recursos para el tipo: $tipo")
     db.collection("inventario")
         .whereEqualTo("tipo", tipo)
         .get()
@@ -629,17 +628,14 @@ fun cargarRecursos(tipo: String, onRecursosCargados: (List<String>, List<String>
             val recursos = mutableListOf<String>()
             val canchas = mutableListOf<String>()
             for (document in result) {
-                Log.d("ManageBookings", "Documento encontrado: ${document.id} con tipo: ${document.getString("tipo")}")
                 when (tipo) {
                     "Juego de mesa", "Instrumento", "Balón" -> recursos.add(document.id)
                     "Cancha" -> canchas.add(document.id)
                 }
             }
-            Log.d("ManageBookings", "Recursos cargados para $tipo: recursos=$recursos, canchas=$canchas")
             onRecursosCargados(recursos, canchas)
         }
         .addOnFailureListener { e ->
-            Log.e("ManageBookings", "Error al cargar recursos para $tipo: ${e.message}")
             onRecursosCargados(emptyList(), emptyList())
         }
 }
