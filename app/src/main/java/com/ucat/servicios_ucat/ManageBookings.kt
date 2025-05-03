@@ -32,7 +32,6 @@ import androidx.compose.ui.unit.sp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.ucat.servicios_ucat.ui.theme.DarkGrey
-import com.ucat.servicios_ucat.ui.theme.White
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -156,6 +155,7 @@ fun ManageBookings(onVolverAlMenu: () -> Unit) {
                 isLoadingReservas = false
             }
     }
+
     fun cargarRecursosPorTipo(tipo: String) {
         db.collection("inventario").document(tipo).get()
             .addOnSuccessListener { doc ->
@@ -185,7 +185,8 @@ fun ManageBookings(onVolverAlMenu: () -> Unit) {
                         Color(0xFF042137)
                     )
                 )
-    ))
+            )
+    )
     {
         Image(
             painter = painterResource(id = R.drawable.logo),
@@ -274,12 +275,14 @@ fun ManageBookings(onVolverAlMenu: () -> Unit) {
                 var expandedTipo by remember { mutableStateOf(false) }
                 var expandedHora by remember { mutableStateOf(false) }
                 var expandedRecurso by remember { mutableStateOf(false) }
-                var expandedDeporte by remember { mutableStateOf(false) }
-                val deportes = listOf("Fútbol", "Baloncesto", "Voleibol", "Pin Pon")
 
                 // Estados separados para el recurso y el deporte en la edición
                 var recursoEditado by remember { mutableStateOf(reservaEdit?.recurso ?: "") }
-                var deporteEditado by remember { mutableStateOf(reservaEdit?.let { if (it.tipo == "Cancha") it.deporte ?: "" else "" } ?: "") }
+                var deporteEditado by remember {
+                    mutableStateOf(reservaEdit?.let {
+                        if (it.tipo == "Cancha") it.deporte ?: "" else ""
+                    } ?: "")
+                }
 
                 // Estado para la lista de recursos filtrada por el tipo seleccionado
                 var recursosDisponiblesEdit by remember { mutableStateOf(listOf<String>()) }
@@ -322,7 +325,6 @@ fun ManageBookings(onVolverAlMenu: () -> Unit) {
                     Spacer(modifier = Modifier.height(16.dp))
 
                     // TIPO
-                    // Cuando el tipo cambia
                     ExposedDropdownMenuBox(
                         expanded = expandedTipo,
                         onExpandedChange = { expandedTipo = !expandedTipo }) {
@@ -405,88 +407,136 @@ fun ManageBookings(onVolverAlMenu: () -> Unit) {
 
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    // RECURSO (Juego, Instrumento, Balón o Cancha)
-                    println("Recursos a mostrar: $recursosMostrar")
-// Actualiza la lista de recursos a mostrar según el tipo
-                    val recursosMostrar = when (tipoEdit) {
-                        "Cancha" -> canchasDisponiblesEdit
-                        else -> recursosDisponiblesEdit
-                    }
-
-// Cuando el recurso cambia (en el ExposedDropdownMenu para los recursos)
-                    ExposedDropdownMenuBox(
-                        expanded = expandedRecurso,
-                        onExpandedChange = { expandedRecurso = !expandedRecurso }) {
-                        TextField(
-                            value = recursoEditado,
-                            onValueChange = {},
-                            readOnly = true,
-                            label = {
-                                Text(
-                                    when (tipoEdit) {
-                                        "Juego de mesa" -> "Juego"
-                                        "Instrumento" -> "Instrumento"
-                                        "Balón" -> "Balón"
-                                        "Cancha" -> "Cancha"
-                                        else -> "Recurso"
-                                    }
-                                )
-                            },
-                            modifier = Modifier.menuAnchor().fillMaxWidth(),
-                            trailingIcon = {
-                                IconButton(onClick = { expandedRecurso = true }) {
-                                    Icon(Icons.Default.ArrowDropDown, contentDescription = null)
-                                }
-                            }
-                        )
-                        ExposedDropdownMenu(
-                            expanded = expandedRecurso,
-                            onDismissRequest = { expandedRecurso = false }
-                        ) {
-                            recursosMostrar.forEach { recurso ->
-                                DropdownMenuItem(
-                                    text = { Text(recurso) },
-                                    onClick = {
-                                        recursoEditado = recurso
-                                        expandedRecurso = false
-                                    }
-                                )
-                            }
-                        }
-                    }
-                    if (tipoEdit == "Cancha") {
-                        Spacer(modifier = Modifier.height(8.dp))
+                    // RECURSO (Juego, Instrumento, Balón) - Mostrar solo si no es Cancha
+                    if (tipoEdit != "Cancha") {
+                        println("Recursos a mostrar: $recursosMostrar")
                         ExposedDropdownMenuBox(
-                            expanded = expandedDeporte,
-                            onExpandedChange = { expandedDeporte = !expandedDeporte }) {
+                            expanded = expandedRecurso,
+                            onExpandedChange = { expandedRecurso = !expandedRecurso }) {
                             TextField(
-                                value = deporteEditado,
+                                value = recursoEditado,
                                 onValueChange = {},
                                 readOnly = true,
-                                label = { Text("Deporte") },
+                                label = {
+                                    Text(
+                                        when (tipoEdit) {
+                                            "Juego de mesa" -> "Juego"
+                                            "Instrumento" -> "Instrumento"
+                                            "Balón" -> "Balón"
+                                            else -> "Recurso"
+                                        }
+                                    )
+                                },
                                 modifier = Modifier.menuAnchor().fillMaxWidth(),
                                 trailingIcon = {
-                                    IconButton(onClick = { expandedDeporte = true }) {
+                                    IconButton(onClick = { expandedRecurso = true }) {
                                         Icon(Icons.Default.ArrowDropDown, contentDescription = null)
                                     }
                                 }
                             )
                             ExposedDropdownMenu(
-                                expanded = expandedDeporte,
-                                onDismissRequest = { expandedDeporte = false }
+                                expanded = expandedRecurso,
+                                onDismissRequest = { expandedRecurso = false }
                             ) {
-                                println("Contenido de deportes: $deportes") // Debug
-                                deportes.forEach { deporte ->
+                                recursosMostrar.forEach { recurso ->
                                     DropdownMenuItem(
-                                        text = { Text(deporte) },
+                                        text = { Text(recurso) },
                                         onClick = {
-                                            deporteEditado = deporte
-                                            expandedDeporte = false
+                                            recursoEditado = recurso
+                                            expandedRecurso = false
                                         }
                                     )
                                 }
                             }
                         }
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+
+                    // Campos específicos para Cancha
+                    if (tipoEdit == "Cancha") {
+                        var canchasMostrarEdit by remember { mutableStateOf(listOf<String>()) }
+                        var expandedDeporteEdit by remember { mutableStateOf(false) }
+                        val deportes = listOf("Fútbol", "Baloncesto", "Voleibol", "Pin Pon")
+                        var deporteEditadoLocal by remember { mutableStateOf(deporteEditado) }
+
+                        // Actualizar canchasMostrarEdit cuando cambia deporteEditadoLocal
+                        LaunchedEffect(deporteEditadoLocal) {
+                            canchasMostrarEdit = when (deporteEditadoLocal) {
+                                "Pin Pon" -> listOf("Mesa Pin Pon 1", "Mesa Pin Pon 2")
+                                else -> listOf("Claustro", "Carrera 13")
+                            }
+                            // Si el deporte cambia, y el recurso editado actual no está en la nueva lista, resetearlo
+                            if (recursoEditado !in canchasMostrarEdit) {
+                                recursoEditado = ""
+                            }
+                        }
+
+                        ExposedDropdownMenuBox(
+                            expanded = expandedDeporteEdit,
+                            onExpandedChange = { expandedDeporteEdit = !expandedDeporteEdit }) {
+                            TextField(
+                                value = deporteEditadoLocal,
+                                onValueChange = {},
+                                readOnly = true,
+                                label = { Text("Deporte") },
+                                modifier = Modifier.menuAnchor().fillMaxWidth(),
+                                trailingIcon = {
+                                    IconButton(onClick = { expandedDeporteEdit = true }) {
+                                        Icon(Icons.Default.ArrowDropDown, contentDescription = null)
+                                    }
+                                }
+                            )
+                            ExposedDropdownMenu(
+                                expanded = expandedDeporteEdit,
+                                onDismissRequest = { expandedDeporteEdit = false }
+                            ) {
+                                deportes.forEach { deporte ->
+                                    DropdownMenuItem(
+                                        text = { Text(deporte) },
+                                        onClick = {
+                                            deporteEditadoLocal = deporte
+                                            deporteEditado =
+                                                deporte // Actualizar el estado original
+                                            expandedDeporteEdit = false
+                                        }
+                                    )
+                                }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        ExposedDropdownMenuBox(
+                            expanded = expandedRecurso,
+                            onExpandedChange = { expandedRecurso = !expandedRecurso }) {
+                            TextField(
+                                value = recursoEditado,
+                                onValueChange = {},
+                                readOnly = true,
+                                label = { Text("Cancha") },
+                                modifier = Modifier.menuAnchor().fillMaxWidth(),
+                                trailingIcon = {
+                                    IconButton(onClick = { expandedRecurso = true }) {
+                                        Icon(Icons.Default.ArrowDropDown, contentDescription = null)
+                                    }
+                                }
+                            )
+                            ExposedDropdownMenu(
+                                expanded = expandedRecurso,
+                                onDismissRequest = { expandedRecurso = false }
+                            ) {
+                                canchasMostrarEdit.forEach { cancha ->
+                                    DropdownMenuItem(
+                                        text = { Text(cancha) },
+                                        onClick = {
+                                            recursoEditado = cancha
+                                            expandedRecurso = false
+                                        }
+                                    )
+                                }
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(8.dp))
                     }
 
                     Row(
@@ -498,7 +548,7 @@ fun ManageBookings(onVolverAlMenu: () -> Unit) {
                         Button(
                             onClick = {
                                 // Validación de campos vacíos
-                                if (fechaEdit.isBlank() || horaEdit.isBlank() || recursoEditado.isBlank() || (tipoEdit == "Cancha" && deporteEditado.isBlank())) {
+                                if (fechaEdit.isBlank() || horaEdit.isBlank() || recursoEditado.isBlank() || (tipoEdit == "Cancha" && deporteEditado.isBlank() && recursoEditado.isBlank())) {
                                     Toast.makeText(
                                         context,
                                         "Por favor completa todos los campos",
@@ -521,6 +571,7 @@ fun ManageBookings(onVolverAlMenu: () -> Unit) {
                                         data["cancha"] = recursoEditado
                                         data["deporte"] = deporteEditado
                                     }
+
                                     else -> data["recurso"] = recursoEditado
                                 }
 
@@ -549,7 +600,6 @@ fun ManageBookings(onVolverAlMenu: () -> Unit) {
                         ) {
                             Text("Guardar cambios")
                         }
-
                         Spacer(modifier = Modifier.height(8.dp))
 
                         Button(
@@ -569,7 +619,6 @@ fun ManageBookings(onVolverAlMenu: () -> Unit) {
         }
     }
 }
-
 fun cargarRecursos(tipo: String, onRecursosCargados: (List<String>, List<String>) -> Unit) {
     val db = FirebaseFirestore.getInstance()
     Log.d("ManageBookings", "Cargando recursos para el tipo: $tipo")

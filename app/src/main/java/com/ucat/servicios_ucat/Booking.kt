@@ -382,7 +382,8 @@ fun reservarCancha(
                     "Balón",
                     limpiarFormulario = {},
                     onFinish = {},
-                    onLoadingChange = {} // También pasar una función vacía aquí si no necesitas manejar la carga del balón por separado
+                    onLoadingChange = {},
+                    esAuxiliar = true // Marcar la reserva del balón como auxiliar
                 )
             }
 
@@ -416,7 +417,8 @@ fun reservarObjeto(
     tipo: String,
     limpiarFormulario: () -> Unit,
     onFinish: () -> Unit,
-    onLoadingChange: (Boolean) -> Unit // Nuevo parámetro para controlar el estado de carga
+    onLoadingChange: (Boolean) -> Unit,
+    esAuxiliar: Boolean = false // Nuevo parámetro
 ) {
     val inventarioRef = db.collection("inventario").document(nombreObjeto)
     val reservasRef = db.collection("reservas")
@@ -445,9 +447,9 @@ fun reservarObjeto(
                         "hora" to hora,
                         "uid" to firebaseAuth.currentUser?.uid,
                         (if (tipo == "Instrumento") "instrumento" else if (tipo == "Balón") "balon" else "juego") to nombreObjeto,
-                        "timestamp" to Timestamp.now()
+                        "timestamp" to Timestamp.now(),
+                        "esAuxiliar" to esAuxiliar // Añadir el campo esAuxiliar
                     )
-
                     reservasRef.add(reserva)
                         .addOnSuccessListener {
                             Toast.makeText(context, "Reserva de $tipo ($nombreObjeto) exitosa", Toast.LENGTH_SHORT).show()
