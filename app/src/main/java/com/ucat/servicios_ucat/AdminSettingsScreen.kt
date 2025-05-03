@@ -16,18 +16,55 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ucat.servicios_ucat.ui.theme.DarkGrey
 import com.ucat.servicios_ucat.ui.theme.White
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
+import com.google.firebase.auth.FirebaseAuth
 
 @Composable
 fun AdminSettingsScreen(
     onVolverAlDashboard: () -> Unit,
     onCerrarSesionAdmin: () -> Unit
 ) {
+    val context = LocalContext.current
+    var nuevaContrasena by remember { mutableStateOf("") }
+    var repNuevaContrasena by remember { mutableStateOf("") }
+    val mostrarNuevaContrasena = remember { mutableStateOf(false) }
+    val mostrarRepNuevaContrasena = remember { mutableStateOf(false) }
+    var cambioContrasenaExitoso by remember { mutableStateOf<Boolean?>(null) }
+
+    fun esContrasenaValida(contrasena: String): Boolean {
+        val regex = "^(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#\$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>\\/?]).+$"
+        return contrasena.matches(regex.toRegex())
+    }
+
+    val contrasenasCoinciden = nuevaContrasena == repNuevaContrasena && nuevaContrasena.isNotBlank()
+
+    val auth = FirebaseAuth.getInstance()
+
+    fun cambiarContrasena() {
+        if (nuevaContrasena.isNotBlank() && contrasenasCoinciden && esContrasenaValida(nuevaContrasena)) {
+            val user = auth.currentUser
+            user?.updatePassword(nuevaContrasena)
+                ?.addOnSuccessListener {
+                    cambioContrasenaExitoso = true
+                    nuevaContrasena = ""
+                    repNuevaContrasena = ""
+                }
+                ?.addOnFailureListener {
+                    cambioContrasenaExitoso = false
+                }
+        } else {
+            cambioContrasenaExitoso = false // Indicate failure if passwords don't match or aren't valid
+        }
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -77,29 +114,74 @@ fun AdminSettingsScreen(
             }
             Spacer(modifier = Modifier.height(30.dp))
 
-            // Opciones de ajustes de administrador
-            Button(
-                onClick = { /* TODO: Implementar funcionalidad para gestionar usuarios */ },
+            Text("Cambiar Contraseña", fontWeight = FontWeight.Bold, color = White, fontSize = 18.sp, modifier = Modifier.align(Alignment.Start))
+            Spacer(modifier = Modifier.height(8.dp))
+
+            TextField(
+                value = nuevaContrasena,
+                onValueChange = { nuevaContrasena = it },
+                label = { Text("Nueva Contraseña") },
                 modifier = Modifier
                     .width(380.dp)
                     .height(60.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = DarkGrey),
-                shape = RectangleShape
-            ) {
-                Text("Gestionar Usuarios", fontSize = 18.sp, color = White)
+                visualTransformation = if (mostrarNuevaContrasena.value) VisualTransformation.None else PasswordVisualTransformation(),
+                trailingIcon = {
+                    IconButton(onClick = { mostrarNuevaContrasena.value = !mostrarNuevaContrasena.value }) {
+                        val icon = if (mostrarNuevaContrasena.value) R.drawable.eye_show else R.drawable.hidden_eye
+                        Image(painter = painterResource(id = icon), contentDescription = "Mostrar/Ocultar contraseña")
+                    }
+                }
+            )
+            if (nuevaContrasena.isNotBlank() && !esContrasenaValida(nuevaContrasena)) {
+                Text(
+                    text = "Debe tener al menos 1 mayúscula, 1 número y 1 símbolo.",
+                    color = White,
+                    fontSize = 12.sp
+                )
             }
             Spacer(modifier = Modifier.height(16.dp))
 
+            TextField(
+                value = repNuevaContrasena,
+                onValueChange = { repNuevaContrasena = it },
+                label = { Text("Repetir Nueva Contraseña") },
+                modifier = Modifier
+                    .width(380.dp)
+                    .height(60.dp),
+                visualTransformation = if (mostrarRepNuevaContrasena.value) VisualTransformation.None else PasswordVisualTransformation(),
+                trailingIcon = {
+                    IconButton(onClick = { mostrarRepNuevaContrasena.value = !mostrarRepNuevaContrasena.value }) {
+                        val icon = if (mostrarRepNuevaContrasena.value) R.drawable.eye_show else R.drawable.hidden_eye
+                        Image(painter = painterResource(id = icon), contentDescription = "Mostrar/Ocultar contraseña")
+                    }
+                }
+            )
+            if (!contrasenasCoinciden && repNuevaContrasena.isNotBlank()) {
+                Text(
+                    text = "Las contraseñas no coinciden",
+                    color = White,
+                    fontSize = 12.sp
+                )
+            }
+            Spacer(modifier = Modifier.height(32.dp))
+
             Button(
-                onClick = { /* TODO: Implementar funcionalidad para gestionar inventario */ },
+                onClick = { cambiarContrasena() },
                 modifier = Modifier
                     .width(380.dp)
                     .height(60.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = DarkGrey),
                 shape = RectangleShape
             ) {
-                Text("Gestionar Inventario", fontSize = 18.sp, color = White)
+                Text("Cambiar Contraseña", fontSize = 18.sp, color = White)
             }
+
+            if (cambioContrasenaExitoso == true) {
+                Text("Contraseña cambiada exitosamente.", color = White)
+            } else if (cambioContrasenaExitoso == false) {
+                Text("Error al cambiar la contraseña. Verifica los requisitos.", color = Color.Red)
+            }
+
             Spacer(modifier = Modifier.height(32.dp))
             Divider(color = White.copy(alpha = 0.3f), thickness = 1.dp)
             Spacer(modifier = Modifier.height(16.dp))

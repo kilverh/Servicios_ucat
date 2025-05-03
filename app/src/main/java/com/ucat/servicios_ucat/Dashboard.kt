@@ -8,12 +8,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
@@ -59,6 +61,7 @@ fun DashboardContent(
                 fontSize = 28.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.White,
+                textAlign = TextAlign.Center
             )
 
             Spacer(modifier = Modifier.height(64.dp))
@@ -67,7 +70,8 @@ fun DashboardContent(
                 onClick = onIrAReservar,
                 modifier = Modifier
                     .width(380.dp)
-                    .height(60.dp),
+                    .height(60.dp)
+                    .shadow(elevation = 16.dp),
                 shape = RectangleShape
             ) {
                 Text("RESERVAR")
@@ -78,7 +82,8 @@ fun DashboardContent(
                 onClick = onIrAGestionarReservas,
                 modifier = Modifier
                     .width(380.dp)
-                    .height(60.dp),
+                    .height(60.dp)
+                    .shadow(elevation = 16.dp),
                 shape = RectangleShape
             ) {
                 Text("MIS RESERVAS")
@@ -89,7 +94,8 @@ fun DashboardContent(
                 onClick = onIrAAjustesCuenta,
                 modifier = Modifier
                     .width(380.dp)
-                    .height(60.dp),
+                    .height(60.dp)
+                    .shadow(elevation = 16.dp),
                 shape = RectangleShape
             ) {
                 Text("AJUSTES DE CUENTA")
@@ -99,7 +105,8 @@ fun DashboardContent(
                 onClick = onIrAAyuda,
                 modifier = Modifier
                     .width(380.dp)
-                    .height(60.dp),
+                    .height(60.dp)
+                    .shadow(elevation = 16.dp),
                 shape = RectangleShape
             ) {
                 Text("AYUDA")
@@ -109,7 +116,8 @@ fun DashboardContent(
                 onClick = onIrACerrar,
                 modifier = Modifier
                     .width(380.dp)
-                    .height(60.dp),
+                    .height(60.dp)
+                    .shadow(elevation = 16.dp),
                 shape = RectangleShape
             ) {
                 Text("CERRAR SESIÓN")
