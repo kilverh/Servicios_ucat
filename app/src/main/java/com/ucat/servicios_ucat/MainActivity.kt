@@ -37,11 +37,13 @@ fun AppContent() {
     var mostrarLogin by remember { mutableStateOf(false) }
     var mostrarDashboardEstudiante by remember { mutableStateOf(false) }
     var mostrarDashboardAdministrador by remember { mutableStateOf(false) }
+    var mostrarVerReservasAdmin by remember { mutableStateOf(false) } // Nuevo estado para el panel de ver reservas
     var mostrarRecuperar by remember { mutableStateOf(false) }
     var mostrarReserva by remember { mutableStateOf(false) }
     var mostrarGestionReservas by remember { mutableStateOf(false) }
     var mostrarAyuda by remember { mutableStateOf(false) }
     var mostrarAjustesCuenta by remember { mutableStateOf(false) }
+    var mostrarAjustesAdmin by remember { mutableStateOf(false) }
     val auth = FirebaseAuth.getInstance()
     val firestore = FirebaseFirestore.getInstance()
     var nombreUsuario by remember { mutableStateOf<String?>(null) }
@@ -216,7 +218,11 @@ fun AppContent() {
                         onReservar = { mostrarDashboardEstudiante = false; mostrarReserva = true },
                         onMisReservas = { mostrarDashboardEstudiante = false; mostrarGestionReservas = true },
                         onAyuda = { mostrarDashboardEstudiante = false; mostrarAyuda = true },
-                        onCerrarSesion = { mostrarDashboardEstudiante = false; mostrarLogin = true },
+                        onCerrarSesion = {
+                            auth.signOut()
+                            mostrarDashboardEstudiante = false
+                            mostrarLogin = true
+                        },
                         onAjustesCuenta = { mostrarDashboardEstudiante = false; mostrarAjustesCuenta = true }
                     )
                 },
@@ -237,8 +243,14 @@ fun AppContent() {
             )
 
             mostrarDashboardAdministrador -> AdminDashboard(
-                onVerReservas = { /* TODO: Navegar a la pantalla de ver reservas de admin */ },
-                onVerEstadisticas = { /* TODO: Navegar a la pantalla de estadísticas de admin */ },
+                onVerReservas = {
+                    mostrarDashboardAdministrador = false;
+                    mostrarVerReservasAdmin = true
+                },
+                onIrAjustesAdmin = {
+                    mostrarDashboardAdministrador = false;
+                    mostrarAjustesAdmin = true
+                },
                 onCerrarSesionAdmin = {
                     auth.signOut()
                     mostrarDashboardAdministrador = false
@@ -246,7 +258,26 @@ fun AppContent() {
                 }
             )
 
-            mostrarAjustesCuenta -> PantallaConDrawer( // Envuelve AccountSettingsScreen
+            mostrarVerReservasAdmin -> VerReservas(
+                onVolverMenu = {
+                    mostrarVerReservasAdmin = false
+                    mostrarDashboardAdministrador = true
+                }
+            ) // Mostrar el panel de ver reservas
+
+            mostrarAjustesAdmin -> AdminSettingsScreen(
+                onVolverAlDashboard = {
+                    mostrarAjustesAdmin = false
+                    mostrarDashboardAdministrador = true
+                },
+                onCerrarSesionAdmin = {
+                    auth.signOut()
+                    mostrarAjustesAdmin = false
+                    mostrarLogin = true
+                }
+            )
+
+            mostrarAjustesCuenta -> PantallaConDrawer( // Mantiene tu pantalla de ajustes de usuario
                 drawerContent = {
                     DrawerContent(
                         onReservar = { mostrarAjustesCuenta = false; mostrarReserva = true },

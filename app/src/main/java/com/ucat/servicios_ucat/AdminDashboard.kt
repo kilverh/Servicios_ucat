@@ -10,7 +10,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.layout.ContentScale
@@ -24,15 +23,15 @@ import com.ucat.servicios_ucat.ui.theme.White
 @Composable
 fun AdminDashboard(
     onVerReservas: () -> Unit,
-    onVerEstadisticas: () -> Unit,
-    onCerrarSesionAdmin: () -> Unit
+    onCerrarSesionAdmin: () -> Unit,
+    onIrAjustesAdmin: () -> Unit = {}
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
         Image(
             painter = painterResource(id = R.drawable.logo),
             contentDescription = null,
             modifier = Modifier
-                .offset(x = 0.dp, y = -65.dp)
+                .offset(x = 0.dp, y = 50.dp)
                 .fillMaxSize()
                 .alpha(0.8f),
             contentScale = ContentScale.FillWidth,
@@ -46,18 +45,19 @@ fun AdminDashboard(
             verticalArrangement = Arrangement.Center
         ) {
             Text(
-                text = "Panel de Administrador",
-                fontSize = 30.sp,
+                text = "PANEL DE ADMINISTRADOR",
+                fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
                 color = White,
                 modifier = Modifier.padding(bottom = 32.dp)
             )
+            Spacer(modifier = Modifier.height(36.dp))
 
             Button(
                 onClick = onVerReservas,
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .height(50.dp),
+                    .width(380.dp)
+                    .height(60.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = BlueButton),
                 shape = RectangleShape
             ) {
@@ -72,28 +72,28 @@ fun AdminDashboard(
             Spacer(modifier = Modifier.height(16.dp))
 
             Button(
-                onClick = onVerEstadisticas,
+                onClick = onIrAjustesAdmin,
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .height(50.dp),
+                    .width(380.dp)
+                    .height(60.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = BlueButton),
                 shape = RectangleShape
             ) {
                 Text(
-                    "Estadísticas",
+                    "Ajustes",
                     color = White,
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold
                 )
             }
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             Button(
                 onClick = onCerrarSesionAdmin,
                 modifier = Modifier
-                    .width(190.dp)
-                    .height(50.dp),
+                    .width(380.dp)
+                    .height(60.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = BlueButton),
                 shape = RectangleShape
             ) {

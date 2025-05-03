@@ -334,7 +334,6 @@ fun FechaPickerField(fecha: String, onFechaSeleccionada: (String) -> Unit) {
         )
     }
 }
-
 fun reservarCancha(
     db: FirebaseFirestore,
     context: android.content.Context,
@@ -353,61 +352,85 @@ fun reservarCancha(
         .whereEqualTo("cancha", cancha)
 
     val firebaseAuth = FirebaseAuth.getInstance()
-    docRef.get().addOnSuccessListener { result ->
-        if (result.isEmpty) {
-            val reserva = hashMapOf(
-                "tipo" to "Cancha",
-                "fecha" to fecha,
-                "hora" to hora,
-                "deporte" to deporte,
-                "cancha" to cancha,
-                "timestamp" to Timestamp.now(),
-                "uid" to firebaseAuth.currentUser?.uid
-            )
+    val currentUser = firebaseAuth.currentUser
 
-            val balonRelacionado = when (deporte) {
-                "Fútbol" -> "Fútbol"
-                "Baloncesto" -> "Baloncesto"
-                "Voleibol" -> "Voleibol"
-                else -> null
-            }
+    currentUser?.let { user ->
+        db.collection("usuarios").document(user.uid).get()
+            .addOnSuccessListener { documentSnapshot ->
+                val codigoUsuario = documentSnapshot.getString("codigoUsuario")
 
-            if (balonRelacionado != null) {
-                reservarObjeto(
-                    db,
-                    context,
-                    fecha,
-                    hora,
-                    balonRelacionado,
-                    "Balón",
-                    limpiarFormulario = {},
-                    onFinish = {},
-                    onLoadingChange = {},
-                    esAuxiliar = true // Marcar la reserva del balón como auxiliar
-                )
-            }
+                if (codigoUsuario != null) {
+                    docRef.get().addOnSuccessListener { result ->
+                        if (result.isEmpty) {
+                            val reserva = hashMapOf(
+                                "tipo" to "Cancha",
+                                "fecha" to fecha,
+                                "hora" to hora,
+                                "deporte" to deporte,
+                                "cancha" to cancha,
+                                "timestamp" to Timestamp.now(),
+                                "uid" to user.uid,
+                                "codigoUsuario" to codigoUsuario // Guardar el código del estudiante
+                            )
 
-            db.collection("reservas")
-                .add(reserva)
-                .addOnSuccessListener {
-                    Toast.makeText(context, "Reserva de cancha exitosa", Toast.LENGTH_SHORT).show()
-                    limpiarFormulario()
-                    onFinish()
-                    onLoadingChange(false) // Desactivar el estado de carga
+                            val balonRelacionado = when (deporte) {
+                                "Fútbol" -> "Fútbol"
+                                "Baloncesto" -> "Baloncesto"
+                                "Voleibol" -> "Voleibol"
+                                else -> null
+                            }
+
+                            if (balonRelacionado != null) {
+                                reservarObjeto(
+                                    db,
+                                    context,
+                                    fecha,
+                                    hora,
+                                    balonRelacionado,
+                                    "Balón",
+                                    limpiarFormulario = {},
+                                    onFinish = {},
+                                    onLoadingChange = {},
+                                    esAuxiliar = true, // Marcar la reserva del balón como auxiliar
+                                    codigoEstudiante = codigoUsuario // Pasar el código del estudiante
+                                )
+                            }
+
+                            db.collection("reservas")
+                                .add(reserva)
+                                .addOnSuccessListener {
+                                    Toast.makeText(context, "Reserva de cancha exitosa", Toast.LENGTH_SHORT).show()
+                                    limpiarFormulario()
+                                    onFinish()
+                                    onLoadingChange(false) // Desactivar el estado de carga
+                                }
+                                .addOnFailureListener {
+                                    Toast.makeText(context, "Error al guardar la reserva", Toast.LENGTH_SHORT).show()
+                                    onLoadingChange(false) // Desactivar el estado de carga en caso de error
+                                }
+                        } else {
+                            Toast.makeText(context, "La cancha ya está reservada para esa hora", Toast.LENGTH_SHORT).show()
+                            onLoadingChange(false) // Desactivar el estado de carga si la cancha ya está reservada
+                        }
+                    }.addOnFailureListener {
+                        Toast.makeText(context, "Error al verificar disponibilidad", Toast.LENGTH_SHORT).show()
+                        onLoadingChange(false) // Desactivar el estado de carga en caso de error al verificar
+                    }
+                } else {
+                    Toast.makeText(context, "No se pudo obtener el código del usuario", Toast.LENGTH_SHORT).show()
+                    onLoadingChange(false)
                 }
-                .addOnFailureListener {
-                    Toast.makeText(context, "Error al guardar la reserva", Toast.LENGTH_SHORT).show()
-                    onLoadingChange(false) // Desactivar el estado de carga en caso de error
-                }
-        } else {
-            Toast.makeText(context, "La cancha ya está reservada para esa hora", Toast.LENGTH_SHORT).show()
-            onLoadingChange(false) // Desactivar el estado de carga si la cancha ya está reservada
-        }
-    }.addOnFailureListener {
-        Toast.makeText(context, "Error al verificar disponibilidad", Toast.LENGTH_SHORT).show()
-        onLoadingChange(false) // Desactivar el estado de carga en caso de error al verificar
+            }
+            .addOnFailureListener {
+                Toast.makeText(context, "Error al obtener información del usuario", Toast.LENGTH_SHORT).show()
+                onLoadingChange(false)
+            }
+    } ?: run {
+        Toast.makeText(context, "Usuario no autenticado", Toast.LENGTH_SHORT).show()
+        onLoadingChange(false)
     }
 }
+
 fun reservarObjeto(
     db: FirebaseFirestore,
     context: android.content.Context,
@@ -418,60 +441,77 @@ fun reservarObjeto(
     limpiarFormulario: () -> Unit,
     onFinish: () -> Unit,
     onLoadingChange: (Boolean) -> Unit,
-    esAuxiliar: Boolean = false // Nuevo parámetro
+    esAuxiliar: Boolean = false, // Nuevo parámetro
+    codigoEstudiante: String? = null // Recibir el código del estudiante
 ) {
     val inventarioRef = db.collection("inventario").document(nombreObjeto)
     val reservasRef = db.collection("reservas")
     val firebaseAuth = FirebaseAuth.getInstance()
+    val currentUser = firebaseAuth.currentUser
 
-    inventarioRef.get().addOnSuccessListener { document ->
-        val cantidadDisponible = document.getLong("cantidadDisponible") ?: 0L
+    currentUser?.let { user ->
+        val estudianteCode = codigoEstudiante ?: run {
+            // Si no se pasa explícitamente (ej. reserva directa de objeto), obtenerlo
+            var code: String? = null
+            db.collection("usuarios").document(user.uid).get().addOnSuccessListener {
+                code = it.getString("codigoUsuario")
+            }.addOnCompleteListener { }
+            code
+        }
 
-        reservasRef
-            .whereEqualTo("tipo", tipo)
-            .whereEqualTo("fecha", fecha)
-            .whereEqualTo("hora", hora)
-            .whereEqualTo(
-                if (tipo == "Instrumento") "instrumento"
-                else if (tipo == "Balón") "balon"
-                else "juego", nombreObjeto
-            )
-            .get()
-            .addOnSuccessListener { resultadoReservas ->
-                val cantidadReservadaEnHorario = resultadoReservas.size()
+        inventarioRef.get().addOnSuccessListener { document ->
+            val cantidadDisponible = document.getLong("cantidadDisponible") ?: 0L
 
-                if (cantidadReservadaEnHorario < cantidadDisponible) {
-                    val reserva = hashMapOf(
-                        "tipo" to tipo,
-                        "fecha" to fecha,
-                        "hora" to hora,
-                        "uid" to firebaseAuth.currentUser?.uid,
-                        (if (tipo == "Instrumento") "instrumento" else if (tipo == "Balón") "balon" else "juego") to nombreObjeto,
-                        "timestamp" to Timestamp.now(),
-                        "esAuxiliar" to esAuxiliar // Añadir el campo esAuxiliar
-                    )
-                    reservasRef.add(reserva)
-                        .addOnSuccessListener {
-                            Toast.makeText(context, "Reserva de $tipo ($nombreObjeto) exitosa", Toast.LENGTH_SHORT).show()
-                            limpiarFormulario()
-                            onFinish()
-                            onLoadingChange(false) // Desactivar el estado de carga
-                        }
-                        .addOnFailureListener {
-                            Toast.makeText(context, "Error al reservar $tipo", Toast.LENGTH_SHORT).show()
-                            onLoadingChange(false) // Desactivar el estado de carga en caso de error
-                        }
-                } else {
-                    Toast.makeText(context, "$tipo ($nombreObjeto) no disponible en este horario", Toast.LENGTH_SHORT).show()
-                    onLoadingChange(false) // Desactivar el estado de carga si no está disponible
+            reservasRef
+                .whereEqualTo("tipo", tipo)
+                .whereEqualTo("fecha", fecha)
+                .whereEqualTo("hora", hora)
+                .whereEqualTo(
+                    if (tipo == "Instrumento") "instrumento"
+                    else if (tipo == "Balón") "balon"
+                    else "juego", nombreObjeto
+                )
+                .get()
+                .addOnSuccessListener { resultadoReservas ->
+                    val cantidadReservadaEnHorario = resultadoReservas.size()
+
+                    if (cantidadReservadaEnHorario < cantidadDisponible) {
+                        val reserva = hashMapOf(
+                            "tipo" to tipo,
+                            "fecha" to fecha,
+                            "hora" to hora,
+                            "uid" to user.uid,
+                            (if (tipo == "Instrumento") "instrumento" else if (tipo == "Balón") "balon" else "juego") to nombreObjeto,
+                            "timestamp" to Timestamp.now(),
+                            "esAuxiliar" to esAuxiliar, // Añadir el campo esAuxiliar
+                            "codigoUsuario" to estudianteCode // Guardar el código del estudiante
+                        )
+                        reservasRef.add(reserva)
+                            .addOnSuccessListener {
+                                Toast.makeText(context, "Reserva de $tipo ($nombreObjeto) exitosa", Toast.LENGTH_SHORT).show()
+                                limpiarFormulario()
+                                onFinish()
+                                onLoadingChange(false) // Desactivar el estado de carga
+                            }
+                            .addOnFailureListener {
+                                Toast.makeText(context, "Error al reservar $tipo", Toast.LENGTH_SHORT).show()
+                                onLoadingChange(false) // Desactivar el estado de carga en caso de error
+                            }
+                    } else {
+                        Toast.makeText(context, "$tipo ($nombreObjeto) no disponible en este horario", Toast.LENGTH_SHORT).show()
+                        onLoadingChange(false) // Desactivar el estado de carga si no está disponible
+                    }
                 }
-            }
-            .addOnFailureListener {
-                Toast.makeText(context, "Error al verificar disponibilidad de $tipo", Toast.LENGTH_SHORT).show()
-                onLoadingChange(false) // Desactivar el estado de carga en caso de error al verificar
-            }
-    }.addOnFailureListener {
-        Toast.makeText(context, "Error al consultar inventario de $tipo", Toast.LENGTH_SHORT).show()
-        onLoadingChange(false) // Desactivar el estado de carga en caso de error al consultar el inventario
+                .addOnFailureListener {
+                    Toast.makeText(context, "Error al verificar disponibilidad de $tipo", Toast.LENGTH_SHORT).show()
+                    onLoadingChange(false) // Desactivar el estado de carga en caso de error al verificar
+                }
+        }.addOnFailureListener {
+            Toast.makeText(context, "Error al consultar inventario de $tipo", Toast.LENGTH_SHORT).show()
+            onLoadingChange(false) // Desactivar el estado de carga en caso de error al consultar el inventario
+        }
+    } ?: run {
+        Toast.makeText(context, "Usuario no autenticado", Toast.LENGTH_SHORT).show()
+        onLoadingChange(false)
     }
 }
