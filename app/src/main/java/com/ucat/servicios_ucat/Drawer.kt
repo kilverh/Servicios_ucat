@@ -70,6 +70,7 @@ fun PantallaConDrawer(
                             Icon(Icons.Default.Menu, contentDescription = "Menú")
                         }
                     },
+
                     colors = TopAppBarDefaults.topAppBarColors(
                         navigationIconContentColor = White,
                         containerColor = BlueButton,

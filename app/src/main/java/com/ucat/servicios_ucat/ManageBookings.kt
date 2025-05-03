@@ -1,6 +1,7 @@
 @file:OptIn(ExperimentalMaterial3Api::class)
 package com.ucat.servicios_ucat
 
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -14,6 +15,7 @@ import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
+import androidx.compose.material3.CardDefaults.cardColors
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.RectangleShape
@@ -29,6 +31,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.ucat.servicios_ucat.ui.theme.DarkGrey
+import com.ucat.servicios_ucat.ui.theme.White
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -69,7 +73,9 @@ fun ManageBookings(onVolverAlMenu: () -> Unit) {
         "18:00",
         "19:00"
     )
+    var isLoadingReservas by remember { mutableStateOf(true) }
     fun cargarReservas() {
+        isLoadingReservas = true
         //Conexion con la tabla en la base de datos de las reservas
         db.collection("reservas")
             .whereEqualTo("uid", userId)
@@ -142,10 +148,12 @@ fun ManageBookings(onVolverAlMenu: () -> Unit) {
                 val reservasFuturas = futurasReservas.filter { it.fecha != hoy }
 
                 reservas = reservasHoy + reservasFuturas
-                println("Lista de reservas cargada: $reservas") // Agregado para debugging
+                println("Lista de reservas cargada: $reservas")
+                isLoadingReservas = false
             }
             .addOnFailureListener { e ->
-                println("Error al cargar las reservas: ${e.message}") // Agregado para debugging
+                println("Error al cargar las reservas: ${e.message}")
+                isLoadingReservas = false
             }
     }
     fun cargarRecursosPorTipo(tipo: String) {
@@ -204,7 +212,11 @@ fun ManageBookings(onVolverAlMenu: () -> Unit) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            if (reservaEdit == null) {
+            if (isLoadingReservas) {
+                CircularProgressIndicator(color = Color.White)
+            } else if (reservas.isEmpty() && reservaEdit == null) {
+                Text("No hay reservas actualmente.", color = Color.White, fontSize = 18.sp)
+            } else if (reservaEdit == null) {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -214,7 +226,8 @@ fun ManageBookings(onVolverAlMenu: () -> Unit) {
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(vertical = 4.dp),
-                            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+                            colors = cardColors(DarkGrey)
                         ) {
                             Column(modifier = Modifier.padding(16.dp)) {
                                 Text("Tipo: ${reserva.tipo}")
@@ -338,6 +351,10 @@ fun ManageBookings(onVolverAlMenu: () -> Unit) {
                                         expandedTipo = false
                                         // Actualizar los recursos disponibles para el nuevo tipo
                                         cargarRecursos(tipo) { recursos, canchas ->
+                                            Log.d(
+                                                "ManageBookings",
+                                                "Callback - Recursos recibidos para $tipo: recursos=$recursos, canchas=$canchas"
+                                            )
                                             recursosDisponiblesEdit = recursos
                                             canchasDisponiblesEdit = canchas
                                         }
@@ -555,23 +572,25 @@ fun ManageBookings(onVolverAlMenu: () -> Unit) {
 
 fun cargarRecursos(tipo: String, onRecursosCargados: (List<String>, List<String>) -> Unit) {
     val db = FirebaseFirestore.getInstance()
-    var recursos = listOf<String>()
-    var canchas = listOf<String>()
-
-    db.collection("inventario").get()
+    Log.d("ManageBookings", "Cargando recursos para el tipo: $tipo")
+    db.collection("inventario")
+        .whereEqualTo("tipo", tipo)
+        .get()
         .addOnSuccessListener { result ->
+            val recursos = mutableListOf<String>()
+            val canchas = mutableListOf<String>()
             for (document in result) {
-                when (document.id) {
-                    "Juego de mesa" -> if (tipo == "Juego de mesa") recursos = (document.get("juegos") as? List<String>) ?: emptyList()
-                    "Instrumento" -> if (tipo == "Instrumento") recursos = (document.get("instrumentos") as? List<String>) ?: emptyList()
-                    "Balón" -> if (tipo == "Balón") recursos = (document.get("balones") as? List<String>) ?: emptyList()
-                    "Cancha" -> if (tipo == "Cancha") canchas = (document.get("canchas") as? List<String>) ?: emptyList()
+                Log.d("ManageBookings", "Documento encontrado: ${document.id} con tipo: ${document.getString("tipo")}")
+                when (tipo) {
+                    "Juego de mesa", "Instrumento", "Balón" -> recursos.add(document.id)
+                    "Cancha" -> canchas.add(document.id)
                 }
             }
+            Log.d("ManageBookings", "Recursos cargados para $tipo: recursos=$recursos, canchas=$canchas")
             onRecursosCargados(recursos, canchas)
         }
         .addOnFailureListener { e ->
+            Log.e("ManageBookings", "Error al cargar recursos para $tipo: ${e.message}")
             onRecursosCargados(emptyList(), emptyList())
         }
 }
-
