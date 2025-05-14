@@ -175,7 +175,8 @@ fun RegistroScreen(
                 Text(
                     text = "El correo institucional debe terminar en @ucatolica.edu.co",
                     color = Color.White,
-                    fontSize = 12.sp
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold
                 )
             }
             Spacer(modifier = Modifier.height(16.dp))
@@ -205,7 +206,8 @@ fun RegistroScreen(
                 Text(
                     text = "Debe tener al menos 1 mayúscula, 1 número y 1 símbolo.",
                     color = Color.White,
-                    fontSize = 12.sp
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold
                 )
             }
             Spacer(modifier = Modifier.height(16.dp))
@@ -232,7 +234,8 @@ fun RegistroScreen(
                 Text(
                     text = "Las contraseñas no coinciden",
                     color = Color.White,
-                    fontSize = 12.sp
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold
                 )
             }
             Spacer(modifier = Modifier.height(16.dp))

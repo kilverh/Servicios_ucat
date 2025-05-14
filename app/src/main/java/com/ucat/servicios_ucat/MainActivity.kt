@@ -228,7 +228,7 @@ fun AppContent() {
                 },
                 contenidoPrincipal = {
                     DashboardContent(
-                        nombreUsuario = nombreUsuario,
+                        nombre = nombreUsuario,
                         onIrAReservar = { mostrarDashboardEstudiante = false; mostrarReserva = true },
                         onIrAGestionarReservas = { mostrarDashboardEstudiante = false; mostrarGestionReservas = true },
                         onIrAAyuda = { mostrarDashboardEstudiante = false; mostrarAyuda = true },

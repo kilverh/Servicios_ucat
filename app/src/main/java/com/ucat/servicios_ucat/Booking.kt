@@ -449,8 +449,7 @@ fun reservarObjeto(
     val currentUser = firebaseAuth.currentUser
 
     currentUser?.let { user ->
-        val codigo = codigoEstudiante ?: run {
-            // Si no se pasa explícitamente (ej. reserva directa de objeto), obtenerlo
+        val codigoEstudiante = codigoEstudiante ?: run {
             var code: String? = null
             db.collection("usuarios").document(user.uid).get().addOnSuccessListener {
                 code = it.getString("codigo")
@@ -482,7 +481,7 @@ fun reservarObjeto(
                             "uid" to user.uid,
                             (if (tipo == "Instrumento") "instrumento" else if (tipo == "Balón") "balon" else "juego") to nombreObjeto,
                             "timestamp" to Timestamp.now(),
-                            "codigo" to codigoEstudiante
+                            "codigoEstudiante" to codigoEstudiante
                         )
                         reservasRef.add(reserva)
                             .addOnSuccessListener {

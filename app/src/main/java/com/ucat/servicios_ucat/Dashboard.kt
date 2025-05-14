@@ -21,7 +21,7 @@ import androidx.compose.ui.unit.sp
 
 @Composable
 fun DashboardContent(
-    nombreUsuario: String?,
+    nombre: String?,
     modifier: Modifier = Modifier,
     onIrAReservar: () -> Unit,
     onIrAGestionarReservas: () -> Unit,
@@ -57,7 +57,7 @@ fun DashboardContent(
         ) {
             //Menu de entrada con saludo personalizado
             Text(
-                text = "BIENVENID@${if (!nombreUsuario.isNullOrEmpty()) " ${nombreUsuario.uppercase()}" else ""}",
+                text = "BIENVENID@${if (!nombre.isNullOrEmpty()) " ${nombre.uppercase()}" else ""}",
                 fontSize = 28.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.White,
