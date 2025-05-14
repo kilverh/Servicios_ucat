@@ -182,6 +182,7 @@ fun VerReservas(esAdmin: Boolean = false, onVolverMenu: () -> Unit, userId: Stri
                         Card(
                             modifier = Modifier
                                 .fillMaxWidth()
+                                .weight(1f)
                                 .padding(vertical = 4.dp),
                             colors = CardDefaults.cardColors(containerColor = DarkGrey)
                         ) {
