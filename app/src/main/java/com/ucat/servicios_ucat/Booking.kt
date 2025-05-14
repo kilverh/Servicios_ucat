@@ -162,7 +162,6 @@ fun Booking(
             modifier = Modifier.fillMaxSize().alpha(0.8f),
             contentScale = ContentScale.FillWidth
         )
-
         Column(
             modifier = Modifier.padding(36.dp).fillMaxSize(),
             verticalArrangement = Arrangement.Center,
@@ -178,7 +177,7 @@ fun Booking(
             Spacer(modifier = Modifier.height(10.dp))
 
             DropdownField("Hora", horas, hora.value) { hora.value = it }
-
+            //formulario reservas, lógica canchas
             when (tipo.value) {
                 "Juego de mesa" -> DropdownField("Juego", juegos, juego.value) { juego.value = it }
                 "Instrumento" -> DropdownField("Instrumento", instrumentos, instrumento.value) { instrumento.value = it }
@@ -357,9 +356,9 @@ fun reservarCancha(
     currentUser?.let { user ->
         db.collection("usuarios").document(user.uid).get()
             .addOnSuccessListener { documentSnapshot ->
-                val codigoUsuario = documentSnapshot.getString("codigoUsuario")
+                val codigoEstudiante = documentSnapshot.getString("codigo")
 
-                if (codigoUsuario != null) {
+                if (codigoEstudiante != null) {
                     docRef.get().addOnSuccessListener { result ->
                         if (result.isEmpty) {
                             val reserva = hashMapOf(
@@ -370,7 +369,7 @@ fun reservarCancha(
                                 "cancha" to cancha,
                                 "timestamp" to Timestamp.now(),
                                 "uid" to user.uid,
-                                "codigoUsuario" to codigoUsuario // Guardar el código del estudiante
+                                "codigo" to codigoEstudiante
                             )
 
                             val balonRelacionado = when (deporte) {
@@ -392,7 +391,7 @@ fun reservarCancha(
                                     onFinish = {},
                                     onLoadingChange = {},
                                     esAuxiliar = true, // Marcar la reserva del balón como auxiliar
-                                    codigoEstudiante = codigoUsuario // Pasar el código del estudiante
+                                    codigoEstudiante= codigoEstudiante // Pasar el código del estudiante
                                 )
                             }
 
@@ -450,11 +449,11 @@ fun reservarObjeto(
     val currentUser = firebaseAuth.currentUser
 
     currentUser?.let { user ->
-        val estudianteCode = codigoEstudiante ?: run {
+        val codigo = codigoEstudiante ?: run {
             // Si no se pasa explícitamente (ej. reserva directa de objeto), obtenerlo
             var code: String? = null
             db.collection("usuarios").document(user.uid).get().addOnSuccessListener {
-                code = it.getString("codigoUsuario")
+                code = it.getString("codigo")
             }.addOnCompleteListener { }
             code
         }
@@ -483,8 +482,7 @@ fun reservarObjeto(
                             "uid" to user.uid,
                             (if (tipo == "Instrumento") "instrumento" else if (tipo == "Balón") "balon" else "juego") to nombreObjeto,
                             "timestamp" to Timestamp.now(),
-                            "esAuxiliar" to esAuxiliar, // Añadir el campo esAuxiliar
-                            "codigoUsuario" to estudianteCode // Guardar el código del estudiante
+                            "codigo" to codigoEstudiante
                         )
                         reservasRef.add(reserva)
                             .addOnSuccessListener {

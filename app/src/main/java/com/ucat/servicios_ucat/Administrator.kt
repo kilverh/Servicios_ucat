@@ -34,11 +34,12 @@ data class ReservaConCodigo(
     val tipo: String = "",
     val recurso: String = "",
     val hora: String = "",
-    val codigoEstudiante: String? = null // Incluimos el código del estudiante
+    val codigo: String? = null // Incluimos el código del estudiante
 )
 
 @Composable
-fun VerReservas(esAdmin: Boolean = false, onVolverMenu: () -> Unit) {
+//función para ver todas las reservas por día
+fun VerReservas(esAdmin: Boolean = false, onVolverMenu: () -> Unit, userId: String? = null) { // Added userId parameter
     val context = LocalContext.current
     val firestore = FirebaseFirestore.getInstance()
     var selectedDate by remember { mutableStateOf(Calendar.getInstance()) }
@@ -66,7 +67,7 @@ fun VerReservas(esAdmin: Boolean = false, onVolverMenu: () -> Unit) {
                                 else -> document.getString("recurso") ?: ""
                             },
                             hora = document.getString("hora") ?: "",
-                            codigoEstudiante = document.getString("codigoUsuario")
+                            codigo = document.getString("codigo")
                         )
                     )
                 }
@@ -134,7 +135,7 @@ fun VerReservas(esAdmin: Boolean = false, onVolverMenu: () -> Unit) {
                     Icon(Icons.Filled.ArrowBack, contentDescription = "Volver al menú", tint = Color.White)
                 }
                 Text(
-                    "RESERVAS POR DIA",
+                    "TUS RESERVAS", // Changed the title to be more generic
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color.White,
@@ -176,7 +177,7 @@ fun VerReservas(esAdmin: Boolean = false, onVolverMenu: () -> Unit) {
             if (reservasDelDia.isEmpty()) {
                 Text("No hay reservas para este día.", color = Color.White)
             } else {
-                LazyColumn(modifier = Modifier.fillMaxSize()) {
+                LazyColumn {
                     items(reservasDelDia) { reserva ->
                         Card(
                             modifier = Modifier
@@ -195,14 +196,12 @@ fun VerReservas(esAdmin: Boolean = false, onVolverMenu: () -> Unit) {
                                     Text("Tipo: ${reserva.tipo}", color = Color.White)
                                     Text("Recurso: ${reserva.recurso}", color = Color.White)
                                     Text("Hora: ${reserva.hora}", color = Color.White)
-                                    reserva.codigoEstudiante?.let {
-                                        Text("Código: ${reserva.codigoEstudiante}", color = Color.White)
+                                    reserva.codigo?.let {
+                                        Text("Código: ${it}", color = Color.White) // Display the code
                                     }
                                 }
-                                if (esAdmin) {
-                                    IconButton(onClick = { eliminarReserva(reserva.id) }) {
-                                        Icon(Icons.Filled.Delete, contentDescription = "Eliminar", tint = Color.Red)
-                                    }
+                                IconButton(onClick = { eliminarReserva(reserva.id) }) {
+                                    Icon(Icons.Filled.Delete, contentDescription = "Eliminar")
                                 }
                             }
                         }

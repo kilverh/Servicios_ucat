@@ -47,6 +47,7 @@ fun AdminDashboard(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
+            //dashboard administrador
             Text(
                 text = "BIENVENIDO ADMINISTRADOR",
                 fontSize = 20.sp,

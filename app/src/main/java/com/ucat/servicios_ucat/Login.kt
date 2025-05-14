@@ -93,7 +93,7 @@ fun Login(
             painter = painterResource(id = R.drawable.logo),
             contentDescription = null,
             modifier = Modifier
-                .offset(x = 0.dp, y = -65.dp)
+                .offset(x = 0.dp, y = -40.dp)
                 .fillMaxSize()
                 .alpha(0.8f),
             contentScale = ContentScale.FillWidth,
@@ -106,7 +106,7 @@ fun Login(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            //Inicio formulario inisio de sesión valida por medio de FireAuth
+            //Formulario inicio de sesión valida por medio de FireAuth
             Text("INICIA SESIÓN", fontSize = 30.sp, fontWeight = FontWeight.Bold, color = White)
             Spacer(modifier = Modifier.height(70.dp))
 

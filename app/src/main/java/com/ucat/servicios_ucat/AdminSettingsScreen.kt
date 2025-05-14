@@ -113,7 +113,7 @@ fun AdminSettingsScreen(
                 )
             }
             Spacer(modifier = Modifier.height(30.dp))
-
+            //Ajustes de administrador
             Text("Cambiar Contraseña", fontWeight = FontWeight.Bold, color = White, fontSize = 18.sp, modifier = Modifier.align(Alignment.Start))
             Spacer(modifier = Modifier.height(8.dp))
 
@@ -194,7 +194,7 @@ fun AdminSettingsScreen(
                 colors = ButtonDefaults.buttonColors(containerColor = Color.Red.copy(alpha = 0.7f)),
                 shape = RectangleShape
             ) {
-                Text("Cerrar Sesión", fontSize = 18.sp, color = White)
+                Text("Eliminar Cuenta", fontSize = 18.sp, color = White)
             }
         }
     }

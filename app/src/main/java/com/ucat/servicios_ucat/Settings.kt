@@ -60,6 +60,7 @@ fun AccountSettingsScreen(
     }
 
     LaunchedEffect(Unit) {
+        //Se conecta con la base de datos, trae la informacion de la tabla usuarios
         isLoading = true
         userId?.let { uid ->
             db.collection("usuarios").document(uid).get()
