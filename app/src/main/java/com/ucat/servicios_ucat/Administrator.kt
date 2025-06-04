@@ -34,7 +34,7 @@ data class ReservaConCodigo(
     val tipo: String = "",
     val recurso: String = "",
     val hora: String = "",
-    val codigo: String? = null // Incluimos el código del estudiante
+    val codigo: String? = null
 )
 
 @Composable
@@ -135,7 +135,7 @@ fun VerReservas(esAdmin: Boolean = false, onVolverMenu: () -> Unit, userId: Stri
                     Icon(Icons.Filled.ArrowBack, contentDescription = "Volver al menú", tint = Color.White)
                 }
                 Text(
-                    "TUS RESERVAS", // Changed the title to be more generic
+                    "TUS RESERVAS",
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color.White,

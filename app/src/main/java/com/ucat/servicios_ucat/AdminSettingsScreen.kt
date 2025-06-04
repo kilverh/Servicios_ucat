@@ -61,7 +61,7 @@ fun AdminSettingsScreen(
                     cambioContrasenaExitoso = false
                 }
         } else {
-            cambioContrasenaExitoso = false // Indicate failure if passwords don't match or aren't valid
+            cambioContrasenaExitoso = false
         }
     }
 

@@ -65,7 +65,7 @@ fun Help(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            //Formulario de ayuda
+
             Text(
                 text = "AYUDA",
                 fontSize = 28.sp,

@@ -55,7 +55,6 @@ fun DashboardContent(
             horizontalAlignment = Alignment.CenterHorizontally
 
         ) {
-            //Menu de entrada con saludo personalizado
             Text(
                 text = "BIENVENID@${if (!nombre.isNullOrEmpty()) " ${nombre.uppercase()}" else ""}",
                 fontSize = 28.sp,

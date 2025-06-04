@@ -55,7 +55,7 @@ fun Booking(
     val loading = remember { mutableStateOf(false) }
     val reservasHoy = remember { mutableStateOf(0) }
 
-    // Verificar reservas existentes al montar el componente
+
     LaunchedEffect(Unit) {
         val hoy = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(Date())
         db.collection("reservas")
@@ -96,7 +96,7 @@ fun Booking(
                 set(Calendar.MINUTE, horaSeleccionada.minutes)
             }
 
-            // Validar que no sea domingo
+
             if (calendarioSeleccionado.get(Calendar.DAY_OF_WEEK) == Calendar.SUNDAY) {
                 Toast.makeText(context, "No se pueden hacer reservas los domingos", Toast.LENGTH_SHORT).show()
                 return
@@ -118,7 +118,7 @@ fun Booking(
             }
             loading.value = true
             val onReservaFinalizada: (Boolean) -> Unit = { success ->
-                loading.value = false // Desactivar el estado de carga al finalizar la reserva
+                loading.value = false
                 if (success) {
                     reservasHoy.value++
                     onReservaExitosa()
@@ -379,19 +379,19 @@ fun reservarCancha(
                                     Toast.makeText(context, "Reserva de cancha exitosa", Toast.LENGTH_SHORT).show()
                                     limpiarFormulario()
                                     onFinish()
-                                    onLoadingChange(false) // Desactivar el estado de carga
+                                    onLoadingChange(false)
                                 }
                                 .addOnFailureListener {
                                     Toast.makeText(context, "Error al guardar la reserva", Toast.LENGTH_SHORT).show()
-                                    onLoadingChange(false) // Desactivar el estado de carga en caso de error
+                                    onLoadingChange(false)
                                 }
                         } else {
                             Toast.makeText(context, "La cancha ya está reservada para esa hora", Toast.LENGTH_SHORT).show()
-                            onLoadingChange(false) // Desactivar el estado de carga si la cancha ya está reservada
+                            onLoadingChange(false)
                         }
                     }.addOnFailureListener {
                         Toast.makeText(context, "Error al verificar disponibilidad", Toast.LENGTH_SHORT).show()
-                        onLoadingChange(false) // Desactivar el estado de carga en caso de error al verificar
+                        onLoadingChange(false)
                     }
                 } else {
                     Toast.makeText(context, "No se pudo obtener el código del usuario", Toast.LENGTH_SHORT).show()

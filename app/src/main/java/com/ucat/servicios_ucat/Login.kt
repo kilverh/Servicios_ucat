@@ -33,8 +33,8 @@ import com.ucat.servicios_ucat.ui.theme.White
 @Composable
 fun Login(
     modifier: Modifier = Modifier,
-    onLoginExitosoEstudiante: () -> Unit, // Cambiamos el nombre para mayor claridad
-    onLoginExitosoAdmin: () -> Unit,    // Nuevo callback para el admin
+    onLoginExitosoEstudiante: () -> Unit,
+    onLoginExitosoAdmin: () -> Unit,
     onIrARegistro: () -> Unit,
     onRecuperar: () -> Unit,
     onError: (String) -> Unit
@@ -65,7 +65,7 @@ fun Login(
             }
     }
 
-    fun VerificarCorreo(onExito: (String?) -> Unit) { // Modificamos para pasar el rol
+    fun VerificarCorreo(onExito: (String?) -> Unit) {
         val user = auth.currentUser
         if (user?.isEmailVerified == true) {
             user.uid?.let { uid ->
@@ -106,7 +106,7 @@ fun Login(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            //Formulario inicio de sesión valida por medio de FireAuth
+
             Text("INICIA SESIÓN", fontSize = 30.sp, fontWeight = FontWeight.Bold, color = White)
             Spacer(modifier = Modifier.height(70.dp))
 

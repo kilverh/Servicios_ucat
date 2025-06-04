@@ -351,7 +351,7 @@ fun ManageBookings(onVolverAlMenu: () -> Unit) {
                                         tipoEdit = tipo
                                         recursoEditado = "" // Reiniciar el recurso editado
                                         expandedTipo = false
-                                        // Actualizar los recursos disponibles para el nuevo tipo
+
                                         cargarRecursos(tipo) { recursos, canchas ->
                                             Log.d(
                                                 "ManageBookings",
@@ -459,13 +459,13 @@ fun ManageBookings(onVolverAlMenu: () -> Unit) {
                         val deportes = listOf("Fútbol", "Baloncesto", "Voleibol", "Pin Pon")
                         var deporteEditadoLocal by remember { mutableStateOf(deporteEditado) }
 
-                        // Actualizar canchasMostrarEdit cuando cambia deporteEditadoLocal
+
                         LaunchedEffect(deporteEditadoLocal) {
                             canchasMostrarEdit = when (deporteEditadoLocal) {
                                 "Pin Pon" -> listOf("Mesa Pin Pon 1", "Mesa Pin Pon 2")
                                 else -> listOf("Claustro", "Carrera 13")
                             }
-                            // Si el deporte cambia, y el recurso editado actual no está en la nueva lista, resetearlo
+
                             if (recursoEditado !in canchasMostrarEdit) {
                                 recursoEditado = ""
                             }

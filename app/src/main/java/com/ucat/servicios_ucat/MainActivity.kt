@@ -37,7 +37,7 @@ fun AppContent() {
     var mostrarLogin by remember { mutableStateOf(false) }
     var mostrarDashboardEstudiante by remember { mutableStateOf(false) }
     var mostrarDashboardAdministrador by remember { mutableStateOf(false) }
-    var mostrarVerReservasAdmin by remember { mutableStateOf(false) } // Nuevo estado para el panel de ver reservas
+    var mostrarVerReservasAdmin by remember { mutableStateOf(false) }
     var mostrarRecuperar by remember { mutableStateOf(false) }
     var mostrarReserva by remember { mutableStateOf(false) }
     var mostrarGestionReservas by remember { mutableStateOf(false) }
@@ -139,7 +139,7 @@ fun AppContent() {
                     Booking(
                         onReservaExitosa = {
                             mostrarReserva = false
-                            mostrarDashboardEstudiante = true // O donde corresponda
+                            mostrarDashboardEstudiante = true
                         }
                     )
                 }
@@ -174,7 +174,7 @@ fun AppContent() {
                     ManageBookings(
                         onVolverAlMenu = {
                             mostrarGestionReservas = false
-                            mostrarDashboardEstudiante = true // O donde corresponda
+                            mostrarDashboardEstudiante = true
                         }
                     )
                 }
@@ -196,7 +196,7 @@ fun AppContent() {
                             mostrarAyuda = false
                             mostrarLogin = true
                         },
-                        onAjustesCuenta = { // Nuevo lambda
+                        onAjustesCuenta = {
                             mostrarAyuda = false
                             mostrarAjustesCuenta = true
                         }
@@ -206,7 +206,7 @@ fun AppContent() {
                     Help(
                         onReservaExitosa = {
                             mostrarAyuda = false
-                            mostrarDashboardEstudiante = true // O donde corresponda
+                            mostrarDashboardEstudiante = true
                         }
                     )
                 }
@@ -277,21 +277,21 @@ fun AppContent() {
                 }
             )
 
-            mostrarAjustesCuenta -> PantallaConDrawer( // Mantiene tu pantalla de ajustes de usuario
+            mostrarAjustesCuenta -> PantallaConDrawer(
                 drawerContent = {
                     DrawerContent(
                         onReservar = { mostrarAjustesCuenta = false; mostrarReserva = true },
                         onMisReservas = { mostrarAjustesCuenta = false; mostrarGestionReservas = true },
                         onAyuda = { mostrarAjustesCuenta = false; mostrarAyuda = true },
                         onCerrarSesion = { mostrarAjustesCuenta = false; mostrarLogin = true },
-                        onAjustesCuenta = {} // Ya estamos aquí, no hacemos nada al clickear
+                        onAjustesCuenta = {}
                     )
                 },
                 contenidoPrincipal = {
                     AccountSettingsScreen(
                         onVolverAlDashboard = {
                             mostrarAjustesCuenta = false
-                            mostrarDashboardEstudiante = true // O donde corresponda
+                            mostrarDashboardEstudiante = true
                         },
                         onCerrarSesion = {
                             mostrarAjustesCuenta = false

@@ -123,8 +123,7 @@ fun AccountSettingsScreen(
                     modifier = Modifier
                         .width(380.dp)
                         .height(60.dp),
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
-                    keyboardActions = KeyboardActions(onNext = { /* TODO: Focus next */ }) // Opcional
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next)
                 )
                 Spacer(modifier = Modifier.height(16.dp))
 
@@ -135,8 +134,7 @@ fun AccountSettingsScreen(
                     modifier = Modifier
                         .width(380.dp)
                         .height(60.dp),
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                    keyboardActions = KeyboardActions(onDone = { /* TODO: Submit */ }) // Opcional
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done)
                 )
                 Spacer(modifier = Modifier.height(32.dp))
 

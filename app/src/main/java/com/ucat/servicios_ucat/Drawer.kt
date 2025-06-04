@@ -81,14 +81,14 @@ fun DrawerContent(
     onMisReservas: () -> Unit,
     onAyuda: () -> Unit,
     onCerrarSesion: () -> Unit,
-    onAjustesCuenta: () -> Unit // Nuevo lambda
+    onAjustesCuenta: () -> Unit
 ) {
     Column(modifier = Modifier.padding(16.dp)) {
         Text("INICIO", modifier = Modifier.padding(8.dp))
         Divider()
         DrawerItem("Reservar", onReservar)
         DrawerItem("Mis Reservas", onMisReservas)
-        DrawerItem("Ajustes de Cuenta", onAjustesCuenta) // Nuevo item
+        DrawerItem("Ajustes de Cuenta", onAjustesCuenta)
         DrawerItem("Ayuda", onAyuda)
         Spacer(modifier = Modifier.height(16.dp))
         Divider()

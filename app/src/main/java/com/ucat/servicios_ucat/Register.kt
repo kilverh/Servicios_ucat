@@ -240,7 +240,7 @@ fun RegistroScreen(
             }
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Dropdown para seleccionar el rol
+
             ExposedDropdownMenuBox(
                 expanded = expandedRol,
                 onExpandedChange = { expandedRol = !expandedRol },
@@ -361,7 +361,7 @@ fun RegistrarUsuario(
     codigo: String,
     correo: String,
     contrasena: String,
-    rol: String, // Nuevo parámetro para el rol
+    rol: String,
     onSuccess: () -> Unit,
     onError: (String) -> Unit
 ) {
