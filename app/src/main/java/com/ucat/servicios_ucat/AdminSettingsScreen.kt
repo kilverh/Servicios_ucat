@@ -16,7 +16,6 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -32,7 +31,7 @@ fun AdminSettingsScreen(
     onVolverAlDashboard: () -> Unit,
     onCerrarSesionAdmin: () -> Unit
 ) {
-    val context = LocalContext.current
+
     var nuevaContrasena by remember { mutableStateOf("") }
     var repNuevaContrasena by remember { mutableStateOf("") }
     val mostrarNuevaContrasena = remember { mutableStateOf(false) }

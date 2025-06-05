@@ -8,7 +8,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.*
-import androidx.compose.runtime.* // Importar composables como remember, mutableStateOf, LaunchedEffect
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -33,7 +33,7 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun AppContent() {
-    // Estados para controlar qué pantalla se muestra
+
     var mostrarSplash by remember { mutableStateOf(true) }
     var mostrarLogin by remember { mutableStateOf(false) }
     var mostrarDashboardEstudiante by remember { mutableStateOf(false) }
@@ -49,10 +49,9 @@ fun AppContent() {
     val auth = FirebaseAuth.getInstance()
     val firestore = FirebaseFirestore.getInstance()
 
-    // Estado para el nombre del usuario
     var nombreUsuario by remember { mutableStateOf<String?>(null) }
 
-    // Función para cargar el nombre del usuario desde Firestore
+
     val cargarNombreUsuario: (String?) -> Unit = { uid ->
         if (uid != null) {
             firestore.collection("usuarios").document(uid)
@@ -61,29 +60,24 @@ fun AppContent() {
                     nombreUsuario = document.getString("nombre")
                 }
                 .addOnFailureListener {
-                    nombreUsuario = "Invitado" // En caso de error, muestra "Invitado"
+                    nombreUsuario = "Invitado"
                 }
         } else {
-            nombreUsuario = null // Si no hay UID, el nombre es nulo
+            nombreUsuario = null
         }
     }
 
-    // LaunchedEffect para manejar el estado de autenticación de Firebase
-    // Se ejecuta cada vez que el usuario logueado cambia
     LaunchedEffect(auth.currentUser?.uid) {
-        // Observa el UID del usuario actual. Cuando cambia (login/logout), este efecto se re-ejecuta.
         val uid = auth.currentUser?.uid
         cargarNombreUsuario(uid)
     }
 
-    // LaunchedEffect para la lógica inicial de la app (splash screen y redirección)
     LaunchedEffect(Unit) {
-        delay(3000) // Duración del Splash Screen
+        delay(3000)
         mostrarSplash = false
 
         val currentUser = auth.currentUser
         if (currentUser != null) {
-            // Si hay un usuario logueado, obtenemos su rol para redirigir
             firestore.collection("usuarios").document(currentUser.uid)
                 .get()
                 .addOnSuccessListener { document ->
@@ -91,14 +85,14 @@ fun AppContent() {
                     when (rol) {
                         "Estudiante" -> mostrarDashboardEstudiante = true
                         "Administrador" -> mostrarDashboardAdministrador = true
-                        else -> mostrarLogin = true // Rol no reconocido, ir al login
+                        else -> mostrarLogin = true
                     }
                 }
                 .addOnFailureListener {
-                    mostrarLogin = true // Error al obtener rol, ir al login
+                    mostrarLogin = true
                 }
         } else {
-            mostrarLogin = true // No hay usuario logueado, ir al login
+            mostrarLogin = true
         }
     }
 
@@ -123,17 +117,15 @@ fun AppContent() {
             mostrarLogin -> Login(
                 onLoginExitosoEstudiante = {
                     mostrarLogin = false
-                    // Después del login, fuerza la carga del nombre del nuevo usuario
                     cargarNombreUsuario(auth.currentUser?.uid)
                     mostrarDashboardEstudiante = true
                 },
                 onLoginExitosoAdmin = {
                     mostrarLogin = false
-                    // Después del login, fuerza la carga del nombre del nuevo usuario
                     cargarNombreUsuario(auth.currentUser?.uid)
                     mostrarDashboardAdministrador = true
                 },
-                onIrARegistro = { mostrarLogin = false }, // Asumiendo que RegistroScreen es el 'else'
+                onIrARegistro = { mostrarLogin = false },
                 onError = {},
                 onRecuperar = {
                     mostrarLogin = false
@@ -164,8 +156,8 @@ fun AppContent() {
                             mostrarAyuda = true
                         },
                         onCerrarSesion = {
-                            auth.signOut() // Cierra sesión de Firebase
-                            nombreUsuario = null // Limpia el nombre al cerrar sesión
+                            auth.signOut()
+                            nombreUsuario = null
                             mostrarReserva = false
                             mostrarLogin = true
                         },
@@ -213,12 +205,7 @@ fun AppContent() {
                     )
                 },
                 contenidoPrincipal = {
-                    ManageBookings(
-                        onVolverAlMenu = {
-                            mostrarGestionReservas = false
-                            mostrarDashboardEstudiante = true
-                        }
-                    )
+                    ManageBookings()
                 }
             )
 
@@ -247,12 +234,7 @@ fun AppContent() {
                     )
                 },
                 contenidoPrincipal = {
-                    Help(
-                        onReservaExitosa = {
-                            mostrarAyuda = false
-                            mostrarDashboardEstudiante = true
-                        }
-                    )
+                    Help()
                 }
             )
 
@@ -273,13 +255,13 @@ fun AppContent() {
                 },
                 contenidoPrincipal = {
                     DashboardContent(
-                        nombre = nombreUsuario, // ¡Aquí se pasa el nombre observado!
+                        nombre = nombreUsuario,
                         onIrAReservar = { mostrarDashboardEstudiante = false; mostrarReserva = true },
                         onIrAGestionarReservas = { mostrarDashboardEstudiante = false; mostrarGestionReservas = true },
                         onIrAAyuda = { mostrarDashboardEstudiante = false; mostrarAyuda = true },
                         onIrACerrar = {
                             auth.signOut()
-                            nombreUsuario = null // Limpia el nombre al cerrar sesión
+                            nombreUsuario = null
                             mostrarDashboardEstudiante = false
                             mostrarLogin = true
                         },
@@ -299,7 +281,7 @@ fun AppContent() {
                 },
                 onCerrarSesionAdmin = {
                     auth.signOut()
-                    nombreUsuario = null // Limpia el nombre al cerrar sesión
+                    nombreUsuario = null
                     mostrarDashboardAdministrador = false
                     mostrarLogin = true
                 }
@@ -357,7 +339,7 @@ fun AppContent() {
                     .padding(innerPadding),
                 onIrALogin = {
                     mostrarLogin = true
-                    nombreUsuario = null // Limpia el nombre al ir al login desde registro
+                    nombreUsuario = null
                 }
             )
         }

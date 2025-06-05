@@ -1,3 +1,4 @@
+@file:OptIn(ExperimentalMaterial3Api::class)
 package com.ucat.servicios_ucat
 
 import android.annotation.SuppressLint
@@ -35,7 +36,6 @@ import androidx.compose.ui.text.input.ImeAction
 import com.ucat.servicios_ucat.ui.theme.White
 
 @SuppressLint("UnrememberedMutableState")
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RegistroScreen(
     modifier: Modifier = Modifier,

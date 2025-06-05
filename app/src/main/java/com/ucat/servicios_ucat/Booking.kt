@@ -1,3 +1,4 @@
+@file:OptIn(ExperimentalMaterial3Api::class)
 package com.ucat.servicios_ucat
 
 import android.app.DatePickerDialog
@@ -28,7 +29,6 @@ import com.google.firebase.firestore.QuerySnapshot
 import java.text.SimpleDateFormat
 import java.util.*
 
-@OptIn(ExperimentalMaterial3Api::class) // Add this annotation for Material 3 components
 @Composable
 fun Booking(
     modifier: Modifier = Modifier,
@@ -80,7 +80,6 @@ fun Booking(
             return
         }
 
-        // Validate specific fields based on type
         when (tipo.value) {
             "Juego de mesa" -> if (juego.value.isBlank()) { Toast.makeText(context, "Seleccione un juego.", Toast.LENGTH_SHORT).show(); return }
             "Instrumento" -> if (instrumento.value.isBlank()) { Toast.makeText(context, "Seleccione un instrumento.", Toast.LENGTH_SHORT).show(); return }
@@ -105,8 +104,8 @@ fun Booking(
                 time = fechaSeleccionadaDate
                 set(Calendar.HOUR_OF_DAY, horaSeleccionadaDate.hours)
                 set(Calendar.MINUTE, horaSeleccionadaDate.minutes)
-                set(Calendar.SECOND, 0) // Clear seconds for accurate comparison
-                set(Calendar.MILLISECOND, 0) // Clear milliseconds
+                set(Calendar.SECOND, 0)
+                set(Calendar.MILLISECOND, 0)
             }
 
             // Client-side date and time validation
@@ -116,7 +115,7 @@ fun Booking(
             }
             if (calendarioSeleccionado.get(Calendar.DAY_OF_WEEK) == Calendar.SATURDAY) {
                 val horaSeleccionadaInt = calendarioSeleccionado.get(Calendar.HOUR_OF_DAY)
-                if (horaSeleccionadaInt < 9 || horaSeleccionadaInt >= 15) { // 9:00 to 14:59 for Saturday
+                if (horaSeleccionadaInt < 9 || horaSeleccionadaInt >= 15) {
                     Toast.makeText(
                         context,
                         "Los sábados solo se puede reservar de 9:00 a 14:00",
@@ -126,12 +125,11 @@ fun Booking(
                 }
             }
 
-            // Adjust 'ahora' to also clear seconds and milliseconds for consistent comparison
             val currentCalendar = Calendar.getInstance().apply {
                 set(Calendar.SECOND, 0)
                 set(Calendar.MILLISECOND, 0)
             }
-            // Add 1 minute to currentCalendar to ensure current minute is not reservable
+
             currentCalendar.add(Calendar.MINUTE, 1)
 
             if (calendarioSeleccionado.before(currentCalendar)) {
@@ -141,7 +139,6 @@ fun Booking(
 
             loading.value = true
 
-            // --- Start of New Reservation Limit Checks ---
             db.collection("reservas")
                 .whereEqualTo("uid", currentUser.uid)
                 .whereEqualTo("fecha", fecha.value)
@@ -171,7 +168,6 @@ fun Booking(
                                 return@addOnSuccessListener
                             }
 
-                            // If all checks pass, proceed with the actual reservation logic
                             val onReservaFinalizada: (Boolean) -> Unit = { success ->
                                 loading.value = false
                                 if (success) {
@@ -204,7 +200,6 @@ fun Booking(
                     Toast.makeText(context, "Error al verificar reservas diarias: ${e.message}", Toast.LENGTH_SHORT).show()
                     loading.value = false
                 }
-            // --- End of New Reservation Limit Checks ---
 
         } catch (e: Exception) {
             Log.e("Booking", "Error en la validación de fecha/hora o formato: ${e.message}")
@@ -236,7 +231,7 @@ fun Booking(
             modifier = Modifier
                 .padding(36.dp)
                 .fillMaxSize()
-                .background(Color.Transparent), // Ensure background is transparent
+                .background(Color.Transparent),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -273,11 +268,11 @@ fun Booking(
 
             Button(
                 onClick = {
-                    attemptReservation() // Call the new unified function
+                    attemptReservation()
                 },
                 modifier = Modifier.width(190.dp).height(50.dp),
                 shape = RectangleShape,
-                enabled = !loading.value // Disable button while loading
+                enabled = !loading.value
             ) {
                 if (loading.value) {
                     CircularProgressIndicator(color = Color.White, strokeWidth = 2.dp, modifier = Modifier.size(24.dp))
@@ -375,16 +370,14 @@ fun FechaPickerField(fecha: String, onFechaSeleccionada: (String) -> Unit) {
         TextField(
             value = fecha,
             onValueChange = {},
-            label = { Text("Fecha (dd/mm/yyyy)") }, // No force color here
+            label = { Text("Fecha (dd/mm/yyyy)") },
             readOnly = true,
             enabled = false,
-            // REMOVED colors = TextFieldDefaults.colors(...)
             trailingIcon = {
                 IconButton(onClick = { datePickerDialog.show() }) {
                     Image(
                         painter = painterResource(R.drawable.calendar),
                         contentDescription = null
-                        // REMOVED colorFilter = androidx.compose.ui.graphics.ColorFilter.tint(Color.White)
                     )
                 }
             },
@@ -393,7 +386,6 @@ fun FechaPickerField(fecha: String, onFechaSeleccionada: (String) -> Unit) {
     }
 }
 
-// Keep your reservarCancha and reservarObjeto functions as they are.
 fun reservarCancha(
     db: FirebaseFirestore,
     context: android.content.Context,
@@ -403,7 +395,7 @@ fun reservarCancha(
     cancha: String,
     limpiarFormulario: () -> Unit,
     onFinish: () -> Unit,
-    onLoadingChange: (Boolean) -> Unit // Nuevo parámetro para controlar el estado de carga
+    onLoadingChange: (Boolean) -> Unit
 ) {
     val docRef = db.collection("reservas")
         .whereEqualTo("tipo", "Cancha")
@@ -442,7 +434,7 @@ fun reservarCancha(
                                 }
                                 .addOnFailureListener {
                                     Toast.makeText(context, "Error al guardar la reserva", Toast.LENGTH_SHORT).show()
-                                    onLoadingChange(false) // Reset loading on failure
+                                    onLoadingChange(false)
                                 }
                         } else {
                             Toast.makeText(context, "La cancha ya está reservada para esa hora", Toast.LENGTH_SHORT).show()
@@ -481,7 +473,7 @@ fun reservarObjeto(
     codigoEstudiante: String? = null
 ) {
     val reservasRef = db.collection("reservas")
-    val inventarioRef = db.collection("inventario").document(nombreObjeto) // Assuming inventario documents are named by object name
+    val inventarioRef = db.collection("inventario").document(nombreObjeto)
     val firebaseAuth = FirebaseAuth.getInstance()
     val currentUser = firebaseAuth.currentUser
 
@@ -523,11 +515,11 @@ fun reservarObjeto(
                                         limpiarFormulario()
                                         onFinish()
                                     }
-                                    onLoadingChange(false) // Reset loading on success
+                                    onLoadingChange(false)
                                 }
                                 .addOnFailureListener {
                                     Toast.makeText(context, "Error al reservar $tipo", Toast.LENGTH_SHORT).show()
-                                    onLoadingChange(false) // Reset loading on failure
+                                    onLoadingChange(false)
                                 }
                         } else {
                             Toast.makeText(context, "$tipo ($nombreObjeto) no disponible en este horario", Toast.LENGTH_SHORT).show()

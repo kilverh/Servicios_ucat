@@ -25,10 +25,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.ucat.servicios_ucat.ui.theme.BlueInstitutional
 
 @Composable
-fun Help(
-    modifier: Modifier = Modifier,
-    onReservaExitosa: ()-> Unit
-) {
+fun Help() {
     val context = LocalContext.current
     val firebaseAuth = FirebaseAuth.getInstance()
     val firestore = FirebaseFirestore.getInstance()

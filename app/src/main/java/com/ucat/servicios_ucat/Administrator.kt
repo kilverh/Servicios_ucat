@@ -40,7 +40,7 @@ data class ReservaConCodigo(
 
 @Composable
 //función para ver todas las reservas por día
-fun VerReservas(esAdmin: Boolean = false, onVolverMenu: () -> Unit, userId: String? = null) {
+fun VerReservas( onVolverMenu: () -> Unit) {
     val context = LocalContext.current
     val firestore = FirebaseFirestore.getInstance()
     var selectedDate by remember { mutableStateOf(Calendar.getInstance()) }

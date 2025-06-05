@@ -44,7 +44,7 @@ data class Reserva(
     val deporte: String? = null
 )
 @Composable
-fun ManageBookings(onVolverAlMenu: () -> Unit) {
+fun ManageBookings() {
     val context = LocalContext.current
     val auth = FirebaseAuth.getInstance()
     val db = FirebaseFirestore.getInstance()
