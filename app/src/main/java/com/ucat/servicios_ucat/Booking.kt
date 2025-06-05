@@ -1,6 +1,7 @@
 package com.ucat.servicios_ucat
 
 import android.app.DatePickerDialog
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -27,6 +28,7 @@ import com.google.firebase.firestore.QuerySnapshot
 import java.text.SimpleDateFormat
 import java.util.*
 
+@OptIn(ExperimentalMaterial3Api::class) // Add this annotation for Material 3 components
 @Composable
 fun Booking(
     modifier: Modifier = Modifier,
@@ -36,6 +38,7 @@ fun Booking(
     val context = LocalContext.current
     val db = FirebaseFirestore.getInstance()
     val firebaseAuth = FirebaseAuth.getInstance()
+    val currentUser = firebaseAuth.currentUser
 
     val tipoList = listOf("Cancha", "Juego de mesa", "Instrumento", "Balón")
     val horas = listOf("08:00", "09:00", "10:00", "11:00", "12:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00")
@@ -53,19 +56,7 @@ fun Booking(
     val deporte = remember { mutableStateOf("") }
     val cancha = remember { mutableStateOf("") }
     val loading = remember { mutableStateOf(false) }
-    val reservasHoy = remember { mutableStateOf(0) }
 
-
-    LaunchedEffect(Unit) {
-        val hoy = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(Date())
-        db.collection("reservas")
-            .whereEqualTo("uid", firebaseAuth.currentUser?.uid)
-            .whereEqualTo("fecha", hoy)
-            .get()
-            .addOnSuccessListener { result ->
-                reservasHoy.value = result.size()
-            }
-    }
 
     val limpiarFormulario = {
         tipo.value = ""
@@ -78,32 +69,54 @@ fun Booking(
         cancha.value = ""
     }
 
-    fun continuarReserva() {
+    fun attemptReservation() {
+        if (currentUser == null) {
+            Toast.makeText(context, "Debe iniciar sesión para reservar.", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        if (tipo.value.isBlank() || fecha.value.isBlank() || hora.value.isBlank()) {
+            Toast.makeText(context, "Por favor, complete todos los campos obligatorios.", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        // Validate specific fields based on type
+        when (tipo.value) {
+            "Juego de mesa" -> if (juego.value.isBlank()) { Toast.makeText(context, "Seleccione un juego.", Toast.LENGTH_SHORT).show(); return }
+            "Instrumento" -> if (instrumento.value.isBlank()) { Toast.makeText(context, "Seleccione un instrumento.", Toast.LENGTH_SHORT).show(); return }
+            "Balón" -> if (balon.value.isBlank()) { Toast.makeText(context, "Seleccione un balón.", Toast.LENGTH_SHORT).show(); return }
+            "Cancha" -> {
+                if (deporte.value.isBlank()) { Toast.makeText(context, "Seleccione un deporte.", Toast.LENGTH_SHORT).show(); return }
+                if (cancha.value.isBlank()) { Toast.makeText(context, "Seleccione una cancha.", Toast.LENGTH_SHORT).show(); return }
+            }
+        }
+
 
         val formatoFecha = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
         val formatoHora = SimpleDateFormat("HH:mm", Locale.getDefault())
         val ahora = Calendar.getInstance()
 
-
         try {
-            val fechaSeleccionada = formatoFecha.parse(fecha.value) ?: return
+            val fechaSeleccionadaDate = formatoFecha.parse(fecha.value) ?: return
             val horaSeleccionadaStr = if (hora.value.length == 4) "0${hora.value}" else hora.value
-            val horaSeleccionada = formatoHora.parse(horaSeleccionadaStr) ?: return
+            val horaSeleccionadaDate = formatoHora.parse(horaSeleccionadaStr) ?: return
 
             val calendarioSeleccionado = Calendar.getInstance().apply {
-                time = fechaSeleccionada
-                set(Calendar.HOUR_OF_DAY, horaSeleccionada.hours)
-                set(Calendar.MINUTE, horaSeleccionada.minutes)
+                time = fechaSeleccionadaDate
+                set(Calendar.HOUR_OF_DAY, horaSeleccionadaDate.hours)
+                set(Calendar.MINUTE, horaSeleccionadaDate.minutes)
+                set(Calendar.SECOND, 0) // Clear seconds for accurate comparison
+                set(Calendar.MILLISECOND, 0) // Clear milliseconds
             }
 
-
+            // Client-side date and time validation
             if (calendarioSeleccionado.get(Calendar.DAY_OF_WEEK) == Calendar.SUNDAY) {
                 Toast.makeText(context, "No se pueden hacer reservas los domingos", Toast.LENGTH_SHORT).show()
                 return
             }
             if (calendarioSeleccionado.get(Calendar.DAY_OF_WEEK) == Calendar.SATURDAY) {
                 val horaSeleccionadaInt = calendarioSeleccionado.get(Calendar.HOUR_OF_DAY)
-                if (horaSeleccionadaInt < 9 || horaSeleccionadaInt >= 15) {
+                if (horaSeleccionadaInt < 9 || horaSeleccionadaInt >= 15) { // 9:00 to 14:59 for Saturday
                     Toast.makeText(
                         context,
                         "Los sábados solo se puede reservar de 9:00 a 14:00",
@@ -112,51 +125,107 @@ fun Booking(
                     return
                 }
             }
-            if (calendarioSeleccionado.before(ahora)) {
+
+            // Adjust 'ahora' to also clear seconds and milliseconds for consistent comparison
+            val currentCalendar = Calendar.getInstance().apply {
+                set(Calendar.SECOND, 0)
+                set(Calendar.MILLISECOND, 0)
+            }
+            // Add 1 minute to currentCalendar to ensure current minute is not reservable
+            currentCalendar.add(Calendar.MINUTE, 1)
+
+            if (calendarioSeleccionado.before(currentCalendar)) {
                 Toast.makeText(context, "Debes seleccionar una fecha y hora futura", Toast.LENGTH_SHORT).show()
                 return
             }
+
             loading.value = true
-            val onReservaFinalizada: (Boolean) -> Unit = { success ->
-                loading.value = false
-                if (success) {
-                    reservasHoy.value++
-                    onReservaExitosa()
+
+            // --- Start of New Reservation Limit Checks ---
+            db.collection("reservas")
+                .whereEqualTo("uid", currentUser.uid)
+                .whereEqualTo("fecha", fecha.value)
+                .get()
+                .addOnSuccessListener { dailyBookings ->
+                    val totalDailyBookings = dailyBookings.size()
+                    Log.d("Booking", "Reservas del día para ${currentUser.uid}: $totalDailyBookings")
+
+                    if (totalDailyBookings >= 5) {
+                        Toast.makeText(context, "Ya tienes el límite de 5 reservas para hoy.", Toast.LENGTH_LONG).show()
+                        loading.value = false
+                        return@addOnSuccessListener
+                    }
+
+                    db.collection("reservas")
+                        .whereEqualTo("uid", currentUser.uid)
+                        .whereEqualTo("fecha", fecha.value)
+                        .whereEqualTo("hora", hora.value)
+                        .get()
+                        .addOnSuccessListener { hourlyBookings ->
+                            val totalHourlyBookings = hourlyBookings.size()
+                            Log.d("Booking", "Reservas por hora para ${currentUser.uid} a las ${hora.value}: $totalHourlyBookings")
+
+                            if (totalHourlyBookings >= 2) {
+                                Toast.makeText(context, "Ya tienes el límite de 2 reservas activas para esta hora.", Toast.LENGTH_LONG).show()
+                                loading.value = false
+                                return@addOnSuccessListener
+                            }
+
+                            // If all checks pass, proceed with the actual reservation logic
+                            val onReservaFinalizada: (Boolean) -> Unit = { success ->
+                                loading.value = false
+                                if (success) {
+                                    onReservaExitosa()
+                                }
+                            }
+
+                            when (tipo.value) {
+                                "Cancha" -> reservarCancha(
+                                    db, context, fecha.value, hora.value, deporte.value, cancha.value, limpiarFormulario, { onReservaFinalizada(true) }, { loading.value = it }
+                                )
+                                "Juego de mesa" -> reservarObjeto(
+                                    db, context, fecha.value, hora.value, juego.value, "Juego de mesa", limpiarFormulario, { onReservaFinalizada(true) }, { loading.value = it }
+                                )
+                                "Instrumento" -> reservarObjeto(
+                                    db, context, fecha.value, hora.value, instrumento.value, "Instrumento", limpiarFormulario, { onReservaFinalizada(true) }, { loading.value = it }
+                                )
+                                "Balón" -> reservarObjeto(
+                                    db, context, fecha.value, hora.value, balon.value, "Balón", limpiarFormulario, { onReservaFinalizada(true) }, { loading.value = it }
+                                )
+                            }
+
+                        }.addOnFailureListener { e ->
+                            Log.e("Booking", "Error al verificar reservas por hora: ${e.message}")
+                            Toast.makeText(context, "Error al verificar reservas por hora: ${e.message}", Toast.LENGTH_SHORT).show()
+                            loading.value = false
+                        }
+                }.addOnFailureListener { e ->
+                    Log.e("Booking", "Error al verificar reservas diarias: ${e.message}")
+                    Toast.makeText(context, "Error al verificar reservas diarias: ${e.message}", Toast.LENGTH_SHORT).show()
+                    loading.value = false
                 }
-            }
+            // --- End of New Reservation Limit Checks ---
 
-
-            when (tipo.value) {
-                "Cancha" -> reservarCancha(
-                    db, context, fecha.value, hora.value, deporte.value, cancha.value, limpiarFormulario, { onReservaFinalizada(true) }, { loading.value = it }
-                )
-                "Juego de mesa" -> reservarObjeto(
-                    db, context, fecha.value, hora.value, juego.value, "Juego de mesa", limpiarFormulario, { onReservaFinalizada(true) }, { loading.value = it }
-                )
-                "Instrumento" -> reservarObjeto(
-                    db, context, fecha.value, hora.value, instrumento.value, "Instrumento", limpiarFormulario, { onReservaFinalizada(true) }, { loading.value = it }
-                )
-                "Balón" -> reservarObjeto(
-                    db, context, fecha.value, hora.value, balon.value, "Balón", limpiarFormulario, { onReservaFinalizada(true) }, { loading.value = it }
-                )
-            }
         } catch (e: Exception) {
-            Toast.makeText(context, "Error al validar fecha/hora", Toast.LENGTH_SHORT).show()
+            Log.e("Booking", "Error en la validación de fecha/hora o formato: ${e.message}")
+            Toast.makeText(context, "Error en la validación de fecha/hora o formato.", Toast.LENGTH_SHORT).show()
+            loading.value = false // Ensure loading is reset on error
         }
     }
+
 
     Box(modifier = modifier
         .fillMaxSize()
         .background(
-        brush = Brush.linearGradient(
-            colors = listOf(
-                Color(0xFF042137),
-                Color(0xFF2C80C1),
-                Color(0xFF4C9BE3),
-                Color(0xFF042137)
+            brush = Brush.linearGradient(
+                colors = listOf(
+                    Color(0xFF042137),
+                    Color(0xFF2C80C1),
+                    Color(0xFF4C9BE3),
+                    Color(0xFF042137)
+                )
             )
-        )
-    )) {
+        )) {
         Image(
             painter = painterResource(id = R.drawable.logo),
             contentDescription = null,
@@ -164,7 +233,10 @@ fun Booking(
             contentScale = ContentScale.FillWidth
         )
         Column(
-            modifier = Modifier.padding(36.dp).fillMaxSize(),
+            modifier = Modifier
+                .padding(36.dp)
+                .fillMaxSize()
+                .background(Color.Transparent), // Ensure background is transparent
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -201,28 +273,11 @@ fun Booking(
 
             Button(
                 onClick = {
-                    val hoy = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(Date())
-                    if (fecha.value == hoy) {
-                        db.collection("reservas")
-                            .whereEqualTo("uid", firebaseAuth.currentUser?.uid)
-                            .whereEqualTo("fecha", hoy)
-                            .get()
-                            .addOnSuccessListener { result ->
-                                if (result.size() >= 3) {
-                                    Toast.makeText(context, "Ya tienes 2 reservas para hoy", Toast.LENGTH_SHORT).show()
-                                } else {
-                                    continuarReserva()
-                                }
-                            }
-                            .addOnFailureListener {
-                                Toast.makeText(context, "Error al verificar reservas", Toast.LENGTH_SHORT).show()
-                            }
-                    } else {
-                        continuarReserva()
-                    }
+                    attemptReservation() // Call the new unified function
                 },
                 modifier = Modifier.width(190.dp).height(50.dp),
-                shape = RectangleShape
+                shape = RectangleShape,
+                enabled = !loading.value // Disable button while loading
             ) {
                 if (loading.value) {
                     CircularProgressIndicator(color = Color.White, strokeWidth = 2.dp, modifier = Modifier.size(24.dp))
@@ -270,7 +325,8 @@ fun DropdownField(
         )
         DropdownMenu(
             expanded = expanded,
-            onDismissRequest = { expanded = false }
+            onDismissRequest = { expanded = false },
+            modifier = Modifier.width(IntrinsicSize.Min)
         ) {
             options.forEach { option ->
                 DropdownMenuItem(
@@ -301,7 +357,7 @@ fun FechaPickerField(fecha: String, onFechaSeleccionada: (String) -> Unit) {
             if (tempCalendar.get(Calendar.DAY_OF_WEEK) == Calendar.SUNDAY) {
                 Toast.makeText(context, "No se pueden seleccionar domingos", Toast.LENGTH_SHORT).show()
             } else {
-                val fechaFormateada = String.format("%02d/%02d/%04d", d, m + 1, y)
+                val fechaFormateada = String.format("%02d/%02d/%04d", d, m + 1, y) // dd/MM/yyyy
                 onFechaSeleccionada(fechaFormateada)
             }
         },
@@ -319,14 +375,16 @@ fun FechaPickerField(fecha: String, onFechaSeleccionada: (String) -> Unit) {
         TextField(
             value = fecha,
             onValueChange = {},
-            label = { Text("Fecha (dd/mm/yyyy)") },
+            label = { Text("Fecha (dd/mm/yyyy)") }, // No force color here
             readOnly = true,
             enabled = false,
+            // REMOVED colors = TextFieldDefaults.colors(...)
             trailingIcon = {
                 IconButton(onClick = { datePickerDialog.show() }) {
                     Image(
                         painter = painterResource(R.drawable.calendar),
                         contentDescription = null
+                        // REMOVED colorFilter = androidx.compose.ui.graphics.ColorFilter.tint(Color.White)
                     )
                 }
             },
@@ -334,6 +392,8 @@ fun FechaPickerField(fecha: String, onFechaSeleccionada: (String) -> Unit) {
         )
     }
 }
+
+// Keep your reservarCancha and reservarObjeto functions as they are.
 fun reservarCancha(
     db: FirebaseFirestore,
     context: android.content.Context,
@@ -379,11 +439,10 @@ fun reservarCancha(
                                     Toast.makeText(context, "Reserva de cancha exitosa", Toast.LENGTH_SHORT).show()
                                     limpiarFormulario()
                                     onFinish()
-                                    onLoadingChange(false)
                                 }
                                 .addOnFailureListener {
                                     Toast.makeText(context, "Error al guardar la reserva", Toast.LENGTH_SHORT).show()
-                                    onLoadingChange(false)
+                                    onLoadingChange(false) // Reset loading on failure
                                 }
                         } else {
                             Toast.makeText(context, "La cancha ya está reservada para esa hora", Toast.LENGTH_SHORT).show()
@@ -422,7 +481,7 @@ fun reservarObjeto(
     codigoEstudiante: String? = null
 ) {
     val reservasRef = db.collection("reservas")
-    val inventarioRef = db.collection("inventario").document(nombreObjeto)
+    val inventarioRef = db.collection("inventario").document(nombreObjeto) // Assuming inventario documents are named by object name
     val firebaseAuth = FirebaseAuth.getInstance()
     val currentUser = firebaseAuth.currentUser
 
@@ -464,11 +523,11 @@ fun reservarObjeto(
                                         limpiarFormulario()
                                         onFinish()
                                     }
-                                    onLoadingChange(false)
+                                    onLoadingChange(false) // Reset loading on success
                                 }
                                 .addOnFailureListener {
                                     Toast.makeText(context, "Error al reservar $tipo", Toast.LENGTH_SHORT).show()
-                                    onLoadingChange(false)
+                                    onLoadingChange(false) // Reset loading on failure
                                 }
                         } else {
                             Toast.makeText(context, "$tipo ($nombreObjeto) no disponible en este horario", Toast.LENGTH_SHORT).show()

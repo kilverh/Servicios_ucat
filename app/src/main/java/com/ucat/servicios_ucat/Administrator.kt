@@ -11,6 +11,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
+import androidx.compose.material3.CardDefaults.cardColors
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -39,7 +40,7 @@ data class ReservaConCodigo(
 
 @Composable
 //función para ver todas las reservas por día
-fun VerReservas(esAdmin: Boolean = false, onVolverMenu: () -> Unit, userId: String? = null) { // Added userId parameter
+fun VerReservas(esAdmin: Boolean = false, onVolverMenu: () -> Unit, userId: String? = null) {
     val context = LocalContext.current
     val firestore = FirebaseFirestore.getInstance()
     var selectedDate by remember { mutableStateOf(Calendar.getInstance()) }
@@ -123,6 +124,7 @@ fun VerReservas(esAdmin: Boolean = false, onVolverMenu: () -> Unit, userId: Stri
             modifier = Modifier
                 .padding(horizontal = 36.dp)
                 .fillMaxSize(),
+            verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Spacer(modifier = Modifier.height(36.dp))
@@ -135,7 +137,7 @@ fun VerReservas(esAdmin: Boolean = false, onVolverMenu: () -> Unit, userId: Stri
                     Icon(Icons.Filled.ArrowBack, contentDescription = "Volver al menú", tint = Color.White)
                 }
                 Text(
-                    "TUS RESERVAS",
+                    "RESERVAS",
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color.White,
@@ -173,36 +175,41 @@ fun VerReservas(esAdmin: Boolean = false, onVolverMenu: () -> Unit, userId: Stri
                 color = Color.White,
                 modifier = Modifier.padding(bottom = 8.dp)
             )
-
+            Spacer(modifier = Modifier.height(16.dp))
             if (reservasDelDia.isEmpty()) {
                 Text("No hay reservas para este día.", color = Color.White)
             } else {
-                LazyColumn {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
                     items(reservasDelDia) { reserva ->
                         Card(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .weight(1f)
                                 .padding(vertical = 4.dp),
-                            colors = CardDefaults.cardColors(containerColor = DarkGrey)
+                            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+                            colors = cardColors(DarkGrey)
                         ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(16.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Column {
-                                    Text("Tipo: ${reserva.tipo}", color = Color.White)
-                                    Text("Recurso: ${reserva.recurso}", color = Color.White)
-                                    Text("Hora: ${reserva.hora}", color = Color.White)
-                                    reserva.codigo?.let {
-                                        Text("Código: ${it}", color = Color.White)
+                            Column(modifier = Modifier.padding(6.dp)) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(8.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Column {
+                                        Text("Tipo: ${reserva.tipo}", color = Color.White)
+                                        Text("Recurso: ${reserva.recurso}", color = Color.White)
+                                        Text("Hora: ${reserva.hora}", color = Color.White)
+                                        reserva.codigo?.let {
+                                            Text("Código: ${it}", color = Color.White)
+                                        }
                                     }
-                                }
-                                IconButton(onClick = { eliminarReserva(reserva.id) }) {
-                                    Icon(Icons.Filled.Delete, contentDescription = "Eliminar")
+                                    IconButton(onClick = { eliminarReserva(reserva.id) }) {
+                                        Icon(Icons.Filled.Delete, contentDescription = "Eliminar")
+                                    }
                                 }
                             }
                         }
