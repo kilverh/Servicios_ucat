@@ -60,10 +60,12 @@ fun RegistroScreen(
     var aceptaTerminos by remember { mutableStateOf(false) }
     var isLoading by remember { mutableStateOf(false) }
 
-    // Nuevo estado para el rol
-    var rolSeleccionado by remember { mutableStateOf("Estudiante") } // Valor por defecto
+
+    var rolSeleccionado by remember { mutableStateOf("Estudiante") }
     val roles = listOf("Estudiante", "Administrador")
     var expandedRol by remember { mutableStateOf(false) }
+
+    val CodigoA = "ADMINUCAT2025"
 
     val contrasenasCoinciden = contrasena == repContrasena && contrasena.isNotBlank()
     val camposLlenosEstudiante = nombre.isNotBlank() && codigoEstudiante.isNotBlank() && correo.isNotBlank() &&
@@ -72,6 +74,11 @@ fun RegistroScreen(
             contrasena.isNotBlank() && repContrasena.isNotBlank()
     val camposLlenos by derivedStateOf {
         if (rolSeleccionado == "Estudiante") camposLlenosEstudiante else camposLlenosAdmin
+    }
+
+
+    val isCodigoAdminValido by derivedStateOf {
+        if (rolSeleccionado == "Estudiante") true else codigoAdmin == CodigoA
     }
 
     fun esContrasenaValida(contrasena: String): Boolean {
@@ -286,13 +293,56 @@ fun RegistroScreen(
             Button(
                 onClick = {
                     isLoading = true
-                    val codigo = if (rolSeleccionado == "Estudiante") codigoEstudiante else codigoAdmin
+
+                    if (nombre.isBlank() || correo.isBlank() || contrasena.isBlank() || repContrasena.isBlank()) {
+                        Toast.makeText(context, "Por favor, complete todos los campos obligatorios.", Toast.LENGTH_SHORT).show()
+                        isLoading = false
+                        return@Button
+                    }
+
+                    val codigoParaRegistro = if (rolSeleccionado == "Estudiante") codigoEstudiante else codigoAdmin
+                    if (codigoParaRegistro.isBlank()) {
+                        Toast.makeText(context, "Por favor, ingrese su código.", Toast.LENGTH_SHORT).show()
+                        isLoading = false
+                        return@Button
+                    }
+
+                    if (!contrasenasCoinciden) {
+                        Toast.makeText(context, "Las contraseñas no coinciden.", Toast.LENGTH_SHORT).show()
+                        isLoading = false
+                        return@Button
+                    }
+                    if (!esContrasenaValida(contrasena)) {
+                        Toast.makeText(context, "La contraseña no cumple los requisitos.", Toast.LENGTH_SHORT).show()
+                        isLoading = false
+                        return@Button
+                    }
+                    if (!esCorreoValido(correo)) {
+                        Toast.makeText(context, "El correo institucional debe terminar en @ucatolica.edu.co", Toast.LENGTH_SHORT).show()
+                        isLoading = false
+                        return@Button
+                    }
+
+
+                    if (rolSeleccionado == "Administrador" && codigoAdmin != CodigoA) {
+                        Toast.makeText(context, "Código de administrador incorrecto.", Toast.LENGTH_SHORT).show()
+                        isLoading = false
+                        return@Button
+                    }
+
+                    if (!aceptaTerminos) {
+                        Toast.makeText(context, "Debe aceptar los términos y condiciones.", Toast.LENGTH_SHORT).show()
+                        isLoading = false
+                        return@Button
+                    }
+
+
                     RegistrarUsuario(
                         nombre = nombre,
-                        codigo = codigo,
+                        codigo = codigoParaRegistro,
                         correo = correo,
                         contrasena = contrasena,
-                        rol = rolSeleccionado, // Pasar el rol seleccionado
+                        rol = rolSeleccionado,
                         onSuccess = {
                             Toast.makeText(context, "Cuenta creada exitosamente. Por favor, revisa tu correo para verificar tu cuenta.", Toast.LENGTH_LONG).show()
                             nombre = ""
@@ -324,7 +374,8 @@ fun RegistroScreen(
                         contrasenasCoinciden &&
                         aceptaTerminos &&
                         esContrasenaValida(contrasena) &&
-                        esCorreoValido(correo)
+                        esCorreoValido(correo) &&
+                        isCodigoAdminValido
             ) {
                 if (isLoading) {
                     CircularProgressIndicator(
@@ -381,7 +432,7 @@ fun RegistrarUsuario(
                             val userData = hashMapOf(
                                 "nombre" to nombre,
                                 "codigo" to codigo,
-                                "rol" to rol, // Guardar el rol
+                                "rol" to rol,
                                 "correo" to correo,
                                 "isEmailVerified" to false
                             )

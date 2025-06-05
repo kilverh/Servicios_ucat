@@ -78,6 +78,7 @@ fun Recover(
                             .addOnCompleteListener { task ->
                                 if (task.isSuccessful) {
                                     mensaje = "Correo de recuperación enviado."
+                                    email = ""
                                 } else {
                                     mensaje = "Error: ${task.exception?.message}"
                                 }

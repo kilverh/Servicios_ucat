@@ -55,8 +55,9 @@ fun DashboardContent(
             horizontalAlignment = Alignment.CenterHorizontally
 
         ) {
+            val displayNombre = if (!nombre.isNullOrEmpty()) " ${nombre.uppercase()}" else ""
             Text(
-                text = "BIENVENID@${if (!nombre.isNullOrEmpty()) " ${nombre.uppercase()}" else ""}",
+                text = "BIENVENID@$displayNombre",
                 fontSize = 28.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.White,

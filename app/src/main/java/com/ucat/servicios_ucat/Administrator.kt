@@ -198,7 +198,7 @@ fun VerReservas(esAdmin: Boolean = false, onVolverMenu: () -> Unit, userId: Stri
                                     Text("Recurso: ${reserva.recurso}", color = Color.White)
                                     Text("Hora: ${reserva.hora}", color = Color.White)
                                     reserva.codigo?.let {
-                                        Text("Código: ${it}", color = Color.White) // Display the code
+                                        Text("Código: ${it}", color = Color.White)
                                     }
                                 }
                                 IconButton(onClick = { eliminarReserva(reserva.id) }) {

@@ -34,7 +34,6 @@ import androidx.compose.ui.text.input.ImeAction
 
 @Composable
 fun AccountSettingsScreen(
-    onVolverAlDashboard: () -> Unit,
     onCerrarSesion: () -> Unit
 ) {
     val context = LocalContext.current
@@ -60,7 +59,7 @@ fun AccountSettingsScreen(
     }
 
     LaunchedEffect(Unit) {
-        //Se conecta con la base de datos, trae la informacion de la tabla usuarios
+
         isLoading = true
         userId?.let { uid ->
             db.collection("usuarios").document(uid).get()
@@ -201,6 +200,8 @@ fun AccountSettingsScreen(
                             db.collection("usuarios").document(uid).update(updates)
                                 .addOnSuccessListener {
                                     Toast.makeText(context, "Datos de la cuenta actualizados.", Toast.LENGTH_SHORT).show()
+                                    nombre = ""
+                                    codigo = ""
                                     if (nuevaContrasena.isNotBlank() && contrasenasCoinciden && esContrasenaValida(nuevaContrasena)) {
                                         user?.updatePassword(nuevaContrasena)
                                             ?.addOnSuccessListener {
@@ -282,7 +283,7 @@ fun AccountSettingsScreen(
                                 currentUser?.delete()
                                     ?.addOnSuccessListener {
                                         Toast.makeText(context, "Cuenta eliminada exitosamente.", Toast.LENGTH_SHORT).show()
-                                        onCerrarSesion() // Navegar a la pantalla de inicio de sesión
+                                        onCerrarSesion()
                                     }
                                     ?.addOnFailureListener { e ->
                                         Toast.makeText(context, "Error al eliminar la cuenta: ${e.message}", Toast.LENGTH_SHORT).show()

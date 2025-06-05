@@ -8,7 +8,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.runtime.* // Importar composables como remember, mutableStateOf, LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -33,6 +33,7 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun AppContent() {
+    // Estados para controlar qué pantalla se muestra
     var mostrarSplash by remember { mutableStateOf(true) }
     var mostrarLogin by remember { mutableStateOf(false) }
     var mostrarDashboardEstudiante by remember { mutableStateOf(false) }
@@ -44,12 +45,15 @@ fun AppContent() {
     var mostrarAyuda by remember { mutableStateOf(false) }
     var mostrarAjustesCuenta by remember { mutableStateOf(false) }
     var mostrarAjustesAdmin by remember { mutableStateOf(false) }
+
     val auth = FirebaseAuth.getInstance()
     val firestore = FirebaseFirestore.getInstance()
+
+    // Estado para el nombre del usuario
     var nombreUsuario by remember { mutableStateOf<String?>(null) }
 
-    LaunchedEffect(Unit) {
-        val uid = auth.currentUser?.uid
+    // Función para cargar el nombre del usuario desde Firestore
+    val cargarNombreUsuario: (String?) -> Unit = { uid ->
         if (uid != null) {
             firestore.collection("usuarios").document(uid)
                 .get()
@@ -57,15 +61,45 @@ fun AppContent() {
                     nombreUsuario = document.getString("nombre")
                 }
                 .addOnFailureListener {
-                    nombreUsuario = "Invitado"
+                    nombreUsuario = "Invitado" // En caso de error, muestra "Invitado"
                 }
+        } else {
+            nombreUsuario = null // Si no hay UID, el nombre es nulo
         }
     }
 
+    // LaunchedEffect para manejar el estado de autenticación de Firebase
+    // Se ejecuta cada vez que el usuario logueado cambia
+    LaunchedEffect(auth.currentUser?.uid) {
+        // Observa el UID del usuario actual. Cuando cambia (login/logout), este efecto se re-ejecuta.
+        val uid = auth.currentUser?.uid
+        cargarNombreUsuario(uid)
+    }
+
+    // LaunchedEffect para la lógica inicial de la app (splash screen y redirección)
     LaunchedEffect(Unit) {
-        delay(3000)
+        delay(3000) // Duración del Splash Screen
         mostrarSplash = false
-        mostrarLogin = true
+
+        val currentUser = auth.currentUser
+        if (currentUser != null) {
+            // Si hay un usuario logueado, obtenemos su rol para redirigir
+            firestore.collection("usuarios").document(currentUser.uid)
+                .get()
+                .addOnSuccessListener { document ->
+                    val rol = document.getString("rol")
+                    when (rol) {
+                        "Estudiante" -> mostrarDashboardEstudiante = true
+                        "Administrador" -> mostrarDashboardAdministrador = true
+                        else -> mostrarLogin = true // Rol no reconocido, ir al login
+                    }
+                }
+                .addOnFailureListener {
+                    mostrarLogin = true // Error al obtener rol, ir al login
+                }
+        } else {
+            mostrarLogin = true // No hay usuario logueado, ir al login
+        }
     }
 
     Scaffold(
@@ -89,13 +123,17 @@ fun AppContent() {
             mostrarLogin -> Login(
                 onLoginExitosoEstudiante = {
                     mostrarLogin = false
+                    // Después del login, fuerza la carga del nombre del nuevo usuario
+                    cargarNombreUsuario(auth.currentUser?.uid)
                     mostrarDashboardEstudiante = true
                 },
                 onLoginExitosoAdmin = {
                     mostrarLogin = false
+                    // Después del login, fuerza la carga del nombre del nuevo usuario
+                    cargarNombreUsuario(auth.currentUser?.uid)
                     mostrarDashboardAdministrador = true
                 },
-                onIrARegistro = { mostrarLogin = false },
+                onIrARegistro = { mostrarLogin = false }, // Asumiendo que RegistroScreen es el 'else'
                 onError = {},
                 onRecuperar = {
                     mostrarLogin = false
@@ -126,10 +164,12 @@ fun AppContent() {
                             mostrarAyuda = true
                         },
                         onCerrarSesion = {
+                            auth.signOut() // Cierra sesión de Firebase
+                            nombreUsuario = null // Limpia el nombre al cerrar sesión
                             mostrarReserva = false
                             mostrarLogin = true
                         },
-                        onAjustesCuenta = { // Nuevo lambda
+                        onAjustesCuenta = {
                             mostrarReserva = false
                             mostrarAjustesCuenta = true
                         }
@@ -161,10 +201,12 @@ fun AppContent() {
                             mostrarAyuda = true
                         },
                         onCerrarSesion = {
+                            auth.signOut()
+                            nombreUsuario = null
                             mostrarGestionReservas = false
                             mostrarLogin = true
                         },
-                        onAjustesCuenta = { // Nuevo lambda
+                        onAjustesCuenta = {
                             mostrarGestionReservas = false
                             mostrarAjustesCuenta = true
                         }
@@ -193,6 +235,8 @@ fun AppContent() {
                         },
                         onAyuda = {},
                         onCerrarSesion = {
+                            auth.signOut()
+                            nombreUsuario = null
                             mostrarAyuda = false
                             mostrarLogin = true
                         },
@@ -220,6 +264,7 @@ fun AppContent() {
                         onAyuda = { mostrarDashboardEstudiante = false; mostrarAyuda = true },
                         onCerrarSesion = {
                             auth.signOut()
+                            nombreUsuario = null // Limpia el nombre al cerrar sesión
                             mostrarDashboardEstudiante = false
                             mostrarLogin = true
                         },
@@ -228,12 +273,13 @@ fun AppContent() {
                 },
                 contenidoPrincipal = {
                     DashboardContent(
-                        nombre = nombreUsuario,
+                        nombre = nombreUsuario, // ¡Aquí se pasa el nombre observado!
                         onIrAReservar = { mostrarDashboardEstudiante = false; mostrarReserva = true },
                         onIrAGestionarReservas = { mostrarDashboardEstudiante = false; mostrarGestionReservas = true },
                         onIrAAyuda = { mostrarDashboardEstudiante = false; mostrarAyuda = true },
                         onIrACerrar = {
                             auth.signOut()
+                            nombreUsuario = null // Limpia el nombre al cerrar sesión
                             mostrarDashboardEstudiante = false
                             mostrarLogin = true
                         },
@@ -253,6 +299,7 @@ fun AppContent() {
                 },
                 onCerrarSesionAdmin = {
                     auth.signOut()
+                    nombreUsuario = null // Limpia el nombre al cerrar sesión
                     mostrarDashboardAdministrador = false
                     mostrarLogin = true
                 }
@@ -263,7 +310,7 @@ fun AppContent() {
                     mostrarVerReservasAdmin = false
                     mostrarDashboardAdministrador = true
                 }
-            ) // Mostrar el panel de ver reservas
+            )
 
             mostrarAjustesAdmin -> AdminSettingsScreen(
                 onVolverAlDashboard = {
@@ -272,6 +319,7 @@ fun AppContent() {
                 },
                 onCerrarSesionAdmin = {
                     auth.signOut()
+                    nombreUsuario = null
                     mostrarAjustesAdmin = false
                     mostrarLogin = true
                 }
@@ -283,17 +331,20 @@ fun AppContent() {
                         onReservar = { mostrarAjustesCuenta = false; mostrarReserva = true },
                         onMisReservas = { mostrarAjustesCuenta = false; mostrarGestionReservas = true },
                         onAyuda = { mostrarAjustesCuenta = false; mostrarAyuda = true },
-                        onCerrarSesion = { mostrarAjustesCuenta = false; mostrarLogin = true },
+                        onCerrarSesion = {
+                            auth.signOut()
+                            nombreUsuario = null
+                            mostrarAjustesCuenta = false
+                            mostrarLogin = true
+                        },
                         onAjustesCuenta = {}
                     )
                 },
                 contenidoPrincipal = {
                     AccountSettingsScreen(
-                        onVolverAlDashboard = {
-                            mostrarAjustesCuenta = false
-                            mostrarDashboardEstudiante = true
-                        },
                         onCerrarSesion = {
+                            auth.signOut()
+                            nombreUsuario = null
                             mostrarAjustesCuenta = false
                             mostrarLogin = true
                         }
@@ -304,7 +355,10 @@ fun AppContent() {
             else -> RegistroScreen(
                 modifier = Modifier
                     .padding(innerPadding),
-                onIrALogin = { mostrarLogin = true }
+                onIrALogin = {
+                    mostrarLogin = true
+                    nombreUsuario = null // Limpia el nombre al ir al login desde registro
+                }
             )
         }
     }

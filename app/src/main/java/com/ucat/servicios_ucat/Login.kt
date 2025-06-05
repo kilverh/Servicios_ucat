@@ -1,3 +1,4 @@
+@file:OptIn(ExperimentalMaterial3Api::class)
 package com.ucat.servicios_ucat
 
 import android.util.Log
@@ -131,8 +132,35 @@ fun Login(
                     .width(380.dp)
                     .height(60.dp)
                     .focusRequester(focusContrasena),
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                 keyboardActions = KeyboardActions(
+                    onDone = {
+                        isLoading = true
+                        auth.signInWithEmailAndPassword(correo, contrasena)
+                            .addOnCompleteListener { task ->
+                                if (task.isSuccessful) {
+                                    VerificarCorreo { rol ->
+                                        isLoading = false
+                                        when (rol) {
+                                            "Estudiante" -> onLoginExitosoEstudiante()
+                                            "Administrador" -> onLoginExitosoAdmin()
+                                            else -> {
+                                                Toast.makeText(context, "Rol no reconocido.", Toast.LENGTH_SHORT).show()
+                                                auth.signOut()
+                                            }
+                                        }
+                                    }
+                                } else {
+                                    isLoading = false
+                                    Toast.makeText(
+                                        context,
+                                        "UPS!!! Parece que el correo o la contraseña son incorrectos.",
+                                        Toast.LENGTH_LONG
+                                    ).show()
+                                    onError("Login fallido")
+                                }
+                            }
+                    }
                 ),
                 value = contrasena,
                 onValueChange = { contrasena = it },
